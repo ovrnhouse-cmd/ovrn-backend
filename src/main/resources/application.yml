@@ -1,0 +1,32 @@
+spring:
+  application:
+    name: wolf-ovrn-backend
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/wolf_ovrn_db?connectTimeZone=UTC
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          time_zone: UTC
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+
+server:
+  port: 8080
+
+logging:
+  level:
+    org.springframework.security: INFO
+    org.hibernate.SQL: INFO
