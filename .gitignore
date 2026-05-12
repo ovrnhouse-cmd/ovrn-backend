@@ -1,10 +1,36 @@
+# ===== Maven =====
 HELP.md
 target/
-.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
+.mvn/wrapper/maven-wrapper.jar
 
-### STS ###
+# ===== Compiled output =====
+*.class
+
+# ===== Logs =====
+*.log
+
+# ===== BlueJ =====
+*.ctxt
+
+# ===== Mobile Tools for Java (J2ME) =====
+.mtj.tmp/
+
+# ===== Package files =====
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# ===== JVM crash logs =====
+hs_err_pid*
+replay_pid*
+
+# ===== Spring Tools Suite =====
 .apt_generated
 .classpath
 .factorypath
@@ -13,13 +39,13 @@ target/
 .springBeans
 .sts4-cache
 
-### IntelliJ IDEA ###
+# ===== IntelliJ IDEA =====
 .idea
 *.iws
 *.iml
 *.ipr
 
-### NetBeans ###
+# ===== NetBeans =====
 /nbproject/private/
 /nbbuild/
 /dist/
@@ -29,5 +55,13 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
-### VS Code ###
+# ===== VS Code =====
 .vscode/
+!.vscode/launch.json
+
+# ===== Environment & secrets =====
+.env
+.env.local
+.env.*.local
+application-local.yml
+application-secrets.yml
