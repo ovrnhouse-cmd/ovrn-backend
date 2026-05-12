@@ -1,17 +1,19 @@
 -- ENUMS
-CREATE TYPE user_role AS ENUM ('CUSTOMER', 'ADMIN');
+CREATE TYPE user_role AS ENUM ('USER', 'STAFF', 'MANAGER', 'ADMIN');
 CREATE TYPE order_status AS ENUM ('PENDING', 'PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED');
 
--- USERS TABLE
+-- USERS TABLE (OAuth-based, no password_hash)
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     email VARCHAR(255) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
     first_name VARCHAR(100),
     last_name VARCHAR(100),
-    role user_role NOT NULL DEFAULT 'CUSTOMER',
+    provider VARCHAR(50) NOT NULL,
+    provider_id VARCHAR(255) NOT NULL,
+    role user_role NOT NULL DEFAULT 'USER',
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uq_provider_user UNIQUE (provider, provider_id)
 );
 
 -- CATEGORIES TABLE
