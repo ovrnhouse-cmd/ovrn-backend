@@ -1,5 +1,6 @@
 package com.Ishwarjit.Wolf_OVRN_backend.controller;
 
+import com.Ishwarjit.Wolf_OVRN_backend.dto.ApiResponse;
 import com.Ishwarjit.Wolf_OVRN_backend.dto.CategoryResponse;
 import com.Ishwarjit.Wolf_OVRN_backend.service.CategoryService;
 import java.util.List;
@@ -19,7 +20,7 @@ public class CategoryController {
     }
 
     @GetMapping
-    public ResponseEntity<List<CategoryResponse>> list() {
-        return ResponseEntity.ok(categoryService.listAll());
+    public ResponseEntity<ApiResponse<List<CategoryResponse>>> list() {
+        return ResponseEntity.ok(ApiResponse.ok(categoryService.listAll()));
     }
 }

@@ -51,6 +51,7 @@ public class GlobalExceptionHandler {
 
     private Map<String, Object> baseBody(HttpStatus status, String error, String message) {
         Map<String, Object> body = new LinkedHashMap<>();
+        body.put("success", false);
         body.put("timestamp", OffsetDateTime.now().toString());
         body.put("status", status.value());
         body.put("error", error);

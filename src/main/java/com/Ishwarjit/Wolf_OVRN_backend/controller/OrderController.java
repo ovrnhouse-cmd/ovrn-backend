@@ -1,5 +1,6 @@
 package com.Ishwarjit.Wolf_OVRN_backend.controller;
 
+import com.Ishwarjit.Wolf_OVRN_backend.dto.ApiResponse;
 import com.Ishwarjit.Wolf_OVRN_backend.dto.CreateOrderRequest;
 import com.Ishwarjit.Wolf_OVRN_backend.dto.OrderResponse;
 import com.Ishwarjit.Wolf_OVRN_backend.dto.UpdateOrderRequest;
@@ -36,30 +37,30 @@ public class OrderController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<OrderResponse>> list(
+    public ResponseEntity<ApiResponse<Page<OrderResponse>>> list(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int limit,
             @RequestParam(required = false) String sort) {
         Pageable pageable = PageRequest.of(Math.max(page, 0), Math.max(limit, 1), parseSort(sort));
-        return ResponseEntity.ok(orderService.getAllOrders(pageable));
+        return ResponseEntity.ok(ApiResponse.ok(orderService.getAllOrders(pageable)));
     }
 
     @GetMapping("/me")
-    public ResponseEntity<List<OrderResponse>> myOrders() {
-        return ResponseEntity.ok(orderService.getMyOrders(currentUserId()));
+    public ResponseEntity<ApiResponse<List<OrderResponse>>> myOrders() {
+        return ResponseEntity.ok(ApiResponse.ok(orderService.getMyOrders(currentUserId())));
     }
 
     @PostMapping
-    public ResponseEntity<OrderResponse> create(@Valid @RequestBody CreateOrderRequest request) {
+    public ResponseEntity<ApiResponse<OrderResponse>> create(@Valid @RequestBody CreateOrderRequest request) {
         OrderResponse created = orderService.createOrder(request, currentUserId());
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.created(created));
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<OrderResponse> updateStatus(
+    public ResponseEntity<ApiResponse<OrderResponse>> updateStatus(
             @PathVariable UUID id,
             @Valid @RequestBody UpdateOrderRequest request) {
-        return ResponseEntity.ok(orderService.updateOrderStatus(id, request));
+        return ResponseEntity.ok(ApiResponse.ok(orderService.updateOrderStatus(id, request), "Updated successfully"));
     }
 
     private String currentUserId() {

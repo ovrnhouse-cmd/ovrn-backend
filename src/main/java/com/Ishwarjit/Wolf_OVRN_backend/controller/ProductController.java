@@ -1,5 +1,6 @@
 package com.Ishwarjit.Wolf_OVRN_backend.controller;
 
+import com.Ishwarjit.Wolf_OVRN_backend.dto.ApiResponse;
 import com.Ishwarjit.Wolf_OVRN_backend.dto.CreateProductRequest;
 import com.Ishwarjit.Wolf_OVRN_backend.dto.ImageUploadResponse;
 import com.Ishwarjit.Wolf_OVRN_backend.dto.ProductDetailResponse;
@@ -38,46 +39,46 @@ public class ProductController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<ProductSummaryResponse>> list(
+    public ResponseEntity<ApiResponse<Page<ProductSummaryResponse>>> list(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int limit,
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String category,
             @RequestParam(required = false) String sort) {
         Pageable pageable = PageRequest.of(Math.max(page, 0), Math.max(limit, 1), parseSort(sort));
-        return ResponseEntity.ok(productService.list(search, category, pageable));
+        return ResponseEntity.ok(ApiResponse.ok(productService.list(search, category, pageable)));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ProductDetailResponse> get(@PathVariable UUID id) {
-        return ResponseEntity.ok(productService.getById(id));
+    public ResponseEntity<ApiResponse<ProductDetailResponse>> get(@PathVariable UUID id) {
+        return ResponseEntity.ok(ApiResponse.ok(productService.getById(id)));
     }
 
     @PostMapping
-    public ResponseEntity<ProductDetailResponse> create(@Valid @RequestBody CreateProductRequest request) {
+    public ResponseEntity<ApiResponse<ProductDetailResponse>> create(@Valid @RequestBody CreateProductRequest request) {
         ProductDetailResponse created = productService.create(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.created(created));
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<ProductDetailResponse> update(
+    public ResponseEntity<ApiResponse<ProductDetailResponse>> update(
             @PathVariable UUID id,
             @Valid @RequestBody UpdateProductRequest request) {
-        return ResponseEntity.ok(productService.update(id, request));
+        return ResponseEntity.ok(ApiResponse.ok(productService.update(id, request), "Updated successfully"));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable UUID id) {
+    public ResponseEntity<ApiResponse<Void>> delete(@PathVariable UUID id) {
         productService.delete(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponse.ok(null, "Deleted successfully"));
     }
 
     @PostMapping("/{id}/images")
-    public ResponseEntity<ImageUploadResponse> uploadImage(
+    public ResponseEntity<ApiResponse<ImageUploadResponse>> uploadImage(
             @PathVariable UUID id,
             @RequestPart("file") MultipartFile file) throws IOException {
         ImageUploadResponse response = productService.addImage(id, file);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.created(response));
     }
 
     private Sort parseSort(String sort) {

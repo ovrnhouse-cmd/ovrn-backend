@@ -1,5 +1,6 @@
 package com.Ishwarjit.Wolf_OVRN_backend.controller;
 
+import com.Ishwarjit.Wolf_OVRN_backend.dto.ApiResponse;
 import com.Ishwarjit.Wolf_OVRN_backend.dto.UpdateUserRoleRequest;
 import com.Ishwarjit.Wolf_OVRN_backend.dto.UserResponse;
 import com.Ishwarjit.Wolf_OVRN_backend.service.UserService;
@@ -25,14 +26,14 @@ public class UserController {
     }
 
     @GetMapping
-    public ResponseEntity<List<UserResponse>> list() {
-        return ResponseEntity.ok(userService.getAllUsers());
+    public ResponseEntity<ApiResponse<List<UserResponse>>> list() {
+        return ResponseEntity.ok(ApiResponse.ok(userService.getAllUsers()));
     }
 
     @PatchMapping("/{id}/role")
-    public ResponseEntity<UserResponse> updateRole(
+    public ResponseEntity<ApiResponse<UserResponse>> updateRole(
             @PathVariable UUID id,
             @Valid @RequestBody UpdateUserRoleRequest request) {
-        return ResponseEntity.ok(userService.updateUserRole(id, request));
+        return ResponseEntity.ok(ApiResponse.ok(userService.updateUserRole(id, request), "Updated successfully"));
     }
 }

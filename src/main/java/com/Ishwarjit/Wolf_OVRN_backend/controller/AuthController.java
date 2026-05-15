@@ -1,6 +1,8 @@
 package com.Ishwarjit.Wolf_OVRN_backend.controller;
 
+import com.Ishwarjit.Wolf_OVRN_backend.dto.ApiResponse;
 import com.Ishwarjit.Wolf_OVRN_backend.dto.UserResponse;
+import com.Ishwarjit.Wolf_OVRN_backend.exception.UnauthorizedException;
 import com.Ishwarjit.Wolf_OVRN_backend.repository.UserRepository;
 import com.Ishwarjit.Wolf_OVRN_backend.security.JwtAuthenticationFilter;
 import jakarta.servlet.http.Cookie;
@@ -25,7 +27,7 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(HttpServletResponse response) {
+    public ResponseEntity<ApiResponse<Void>> logout(HttpServletResponse response) {
         Cookie cookie = new Cookie(JwtAuthenticationFilter.COOKIE_NAME, "");
         cookie.setHttpOnly(true);
         cookie.setPath("/");
@@ -33,16 +35,16 @@ public class AuthController {
         cookie.setAttribute("SameSite", "Lax");
         response.addCookie(cookie);
         SecurityContextHolder.clearContext();
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(ApiResponse.ok(null, "Logged out successfully"));
     }
 
     @GetMapping("/me")
-    public ResponseEntity<?> me() {
+    public ResponseEntity<ApiResponse<UserResponse>> me() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null
                 || !authentication.isAuthenticated()
                 || "anonymousUser".equals(authentication.getPrincipal())) {
-            return ResponseEntity.status(401).build();
+            throw new UnauthorizedException("Not authenticated");
         }
 
         Object principal = authentication.getPrincipal();
@@ -50,11 +52,12 @@ public class AuthController {
         try {
             userId = UUID.fromString(principal.toString());
         } catch (IllegalArgumentException ex) {
-            return ResponseEntity.status(401).build();
+            throw new UnauthorizedException("Invalid authentication principal");
         }
 
-        return userRepository.findById(userId)
-                .<ResponseEntity<?>>map(user -> ResponseEntity.ok(UserResponse.from(user)))
-                .orElseGet(() -> ResponseEntity.status(401).build());
+        UserResponse user = userRepository.findById(userId)
+                .map(UserResponse::from)
+                .orElseThrow(() -> new UnauthorizedException("Authenticated user not found"));
+        return ResponseEntity.ok(ApiResponse.ok(user));
     }
 }
