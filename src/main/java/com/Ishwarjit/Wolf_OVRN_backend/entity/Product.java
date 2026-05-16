@@ -62,6 +62,9 @@ public class Product {
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
 
+    @Column(name = "is_premium", nullable = false)
+    private Boolean isPremium = false;
+
     @OneToMany(mappedBy = "product", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("displayOrder ASC")
     private List<ProductImage> images = new ArrayList<>();

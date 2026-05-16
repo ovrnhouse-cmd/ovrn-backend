@@ -88,6 +88,7 @@ public class ProductService {
         product.setMarkedPrice(request.getMarkedPrice());
         product.setInStock(request.getInStock());
         product.setIsActive(true);
+        product.setIsPremium(Boolean.TRUE.equals(request.getIsPremium()));
 
         if (request.getCategoryId() != null) {
             Category category = categoryRepository.findById(request.getCategoryId())
@@ -140,6 +141,9 @@ public class ProductService {
         }
         if (request.getIsActive() != null) {
             product.setIsActive(request.getIsActive());
+        }
+        if (request.getIsPremium() != null) {
+            product.setIsPremium(request.getIsPremium());
         }
         if (request.getCategoryId() != null) {
             Category category = categoryRepository.findById(request.getCategoryId())

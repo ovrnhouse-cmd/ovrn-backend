@@ -8,6 +8,7 @@ public record UserResponse(
         String email,
         String firstName,
         String lastName,
+        String imageUrl,
         String role) {
 
     public static UserResponse from(User user) {
@@ -16,6 +17,7 @@ public record UserResponse(
                 user.getEmail(),
                 user.getFirstName(),
                 user.getLastName(),
+                user.getImageUrl(),
                 user.getRole().name());
     }
 }

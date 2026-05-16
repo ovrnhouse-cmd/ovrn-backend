@@ -35,5 +35,7 @@ public class CreateProductRequest {
 
     private UUID categoryId;
 
+    private Boolean isPremium = false;
+
     private List<String> images;
 }

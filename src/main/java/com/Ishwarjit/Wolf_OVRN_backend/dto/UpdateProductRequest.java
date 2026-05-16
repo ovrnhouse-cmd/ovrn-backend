@@ -29,6 +29,7 @@ public class UpdateProductRequest {
     private Boolean inStock;
 
     private Boolean isActive;
+    private Boolean isPremium;
 
     private UUID categoryId;
 }

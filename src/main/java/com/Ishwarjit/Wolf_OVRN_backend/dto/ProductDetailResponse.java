@@ -15,6 +15,7 @@ public record ProductDetailResponse(
         BigDecimal markedPrice,
         boolean inStock,
         boolean isActive,
+        boolean isPremium,
         CategoryResponse category,
         List<ProductImageResponse> images) {
 
@@ -34,6 +35,7 @@ public record ProductDetailResponse(
                 product.getMarkedPrice(),
                 Boolean.TRUE.equals(product.getInStock()),
                 Boolean.TRUE.equals(product.getIsActive()),
+                Boolean.TRUE.equals(product.getIsPremium()),
                 category,
                 imageDtos);
     }

@@ -39,6 +39,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         String email = Objects.toString(attributes.get("email"), null);
         String givenName = Objects.toString(attributes.get("given_name"), null);
         String familyName = Objects.toString(attributes.get("family_name"), null);
+        String imageUrl = Objects.toString(attributes.get("picture"), null);
 
         if (providerId == null || email == null) {
             throw new OAuth2AuthenticationException("Missing sub or email claim from provider");
@@ -59,6 +60,10 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                         existing.setLastName(familyName);
                         changed = true;
                     }
+                    if (!Objects.equals(existing.getImageUrl(), imageUrl)) {
+                        existing.setImageUrl(imageUrl);
+                        changed = true;
+                    }
                     return changed ? userRepository.save(existing) : existing;
                 })
                 .orElseGet(() -> {
@@ -66,6 +71,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                     created.setEmail(email);
                     created.setFirstName(givenName);
                     created.setLastName(familyName);
+                    created.setImageUrl(imageUrl);
                     created.setProvider(provider);
                     created.setProviderId(providerId);
                     created.setRole(UserRole.USER);
