@@ -32,6 +32,18 @@
 set -euf
 [ "${MVNW_VERBOSE-}" != debug ] || set -x
 
+# Load environment variables from .env file if it exists
+if [ -f .env ]; then
+  # Export variables from .env, ignoring comments
+  export $(grep -v '^#' .env | xargs)
+fi
+
+# Set JAVA_HOME specifically for Mac to ensure Java 21 is used
+if [ "$(uname)" = "Darwin" ]; then
+  # Use the specific path provided by the user as it's known to be Java 21
+  export JAVA_HOME="/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home"
+fi
+
 # OS specific support.
 native_path() { printf %s\\n "$1"; }
 case "$(uname)" in
