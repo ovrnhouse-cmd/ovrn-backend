@@ -58,7 +58,8 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         cookie.setHttpOnly(true);
         cookie.setSecure(true);
         cookie.setPath("/");
-        cookie.setDomain("ovrn.in");
+        // Added only for development
+        // cookie.setDomain("ovrn.in");
         cookie.setMaxAge((int) (jwtService.getExpirationMs() / 1000));
         cookie.setAttribute("SameSite", "Lax");
         response.addCookie(cookie);

@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 import lombok.Getter;
 import lombok.Setter;
@@ -18,8 +19,6 @@ public class CreateProductRequest {
     @Size(max = 255)
     private String name;
 
-    @NotBlank
-    @Size(max = 255)
     private String slug;
 
     private String description;
@@ -35,4 +34,6 @@ public class CreateProductRequest {
     private Boolean inStock;
 
     private UUID categoryId;
+
+    private List<String> images;
 }

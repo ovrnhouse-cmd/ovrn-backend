@@ -6,12 +6,14 @@ import com.Ishwarjit.Wolf_OVRN_backend.dto.ProductDetailResponse;
 import com.Ishwarjit.Wolf_OVRN_backend.dto.ProductSummaryResponse;
 import com.Ishwarjit.Wolf_OVRN_backend.dto.UpdateProductRequest;
 import com.Ishwarjit.Wolf_OVRN_backend.entity.Category;
+import java.util.Locale;
 import com.Ishwarjit.Wolf_OVRN_backend.entity.Product;
 import com.Ishwarjit.Wolf_OVRN_backend.entity.ProductImage;
 import com.Ishwarjit.Wolf_OVRN_backend.exception.ResourceNotFoundException;
 import com.Ishwarjit.Wolf_OVRN_backend.repository.CategoryRepository;
 import com.Ishwarjit.Wolf_OVRN_backend.repository.ProductImageRepository;
 import com.Ishwarjit.Wolf_OVRN_backend.repository.ProductRepository;
+import com.Ishwarjit.Wolf_OVRN_backend.util.SlugUtils;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.Predicate;
 import java.io.IOException;
@@ -76,7 +78,11 @@ public class ProductService {
     public ProductDetailResponse create(CreateProductRequest request) {
         Product product = new Product();
         product.setName(request.getName());
-        product.setSlug(request.getSlug());
+
+        // Generate slug from name
+        String slug = SlugUtils.generate(request.getName());
+        product.setSlug(slug);
+
         product.setDescription(request.getDescription());
         product.setSellingPrice(request.getSellingPrice());
         product.setMarkedPrice(request.getMarkedPrice());
@@ -91,7 +97,22 @@ public class ProductService {
         }
 
         Product saved = productRepository.save(product);
-        return ProductDetailResponse.from(saved, List.of());
+
+        // Save images if provided
+        List<ProductImage> savedImages = new ArrayList<>();
+        if (request.getImages() != null && !request.getImages().isEmpty()) {
+            for (int i = 0; i < request.getImages().size(); i++) {
+                ProductImage image = new ProductImage();
+                image.setProduct(saved);
+                image.setUrl(request.getImages().get(i));
+                image.setAltText(saved.getName());
+                image.setIsPrimary(i == 0);
+                image.setDisplayOrder(i);
+                savedImages.add(productImageRepository.save(image));
+            }
+        }
+
+        return ProductDetailResponse.from(saved, savedImages);
     }
 
     @Transactional
@@ -103,7 +124,7 @@ public class ProductService {
             product.setName(request.getName());
         }
         if (request.getSlug() != null) {
-            product.setSlug(request.getSlug());
+            product.setSlug(SlugUtils.generate(request.getSlug()));
         }
         if (request.getDescription() != null) {
             product.setDescription(request.getDescription());

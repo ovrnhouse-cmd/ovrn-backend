@@ -55,7 +55,7 @@ curl -X POST http://localhost:8080/api/products \
     "sellingPrice": 89.99,
     "markedPrice": 99.99,
     "inStock": true,
-    "categoryId": "{category_uuid}",
+    "categoryId": "f52a59bd-73bc-4f0f-8635-e439f3134a7a",
     "images": ["image_url_1", "image_url_2"]
   }'
 ```

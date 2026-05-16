@@ -34,8 +34,15 @@ set -euf
 
 # Load environment variables from .env file if it exists
 if [ -f .env ]; then
-  # Export variables from .env, ignoring comments
-  export $(grep -v '^#' .env | xargs)
+  # Read .env line by line, ignoring comments and empty lines
+  while IFS= read -r line || [ -n "$line" ]; do
+    case "$line" in
+      \#*|'') continue ;;
+    esac
+    # Remove potential carriage return for Windows-style .env files
+    line=$(printf '%s' "$line" | tr -d '\r')
+    export "$line"
+  done < .env
 fi
 
 # Set JAVA_HOME specifically for Mac to ensure Java 21 is used
