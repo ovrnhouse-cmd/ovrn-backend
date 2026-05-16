@@ -52,8 +52,9 @@ curl -X POST http://localhost:8080/api/products \
   -d '{
     "name": "New Product",
     "description": "Product Description",
-    "price": 99.99,
-    "stock": 100,
+    "sellingPrice": 89.99,
+    "markedPrice": 99.99,
+    "inStock": true,
     "categoryId": "{category_uuid}",
     "images": ["image_url_1", "image_url_2"]
   }'
@@ -65,7 +66,9 @@ curl -X PATCH http://localhost:8080/api/products/{uuid} \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Updated Name",
-    "price": 89.99
+    "sellingPrice": 89.99,
+    "markedPrice": 109.99,
+    "inStock": false
   }'
 ```
 

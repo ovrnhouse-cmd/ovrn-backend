@@ -78,9 +78,9 @@ public class ProductService {
         product.setName(request.getName());
         product.setSlug(request.getSlug());
         product.setDescription(request.getDescription());
-        product.setBasePrice(request.getBasePrice());
-        product.setCompareAtPrice(request.getCompareAtPrice());
-        product.setStockQuantity(request.getStockQuantity());
+        product.setSellingPrice(request.getSellingPrice());
+        product.setMarkedPrice(request.getMarkedPrice());
+        product.setInStock(request.getInStock());
         product.setIsActive(true);
 
         if (request.getCategoryId() != null) {
@@ -108,14 +108,14 @@ public class ProductService {
         if (request.getDescription() != null) {
             product.setDescription(request.getDescription());
         }
-        if (request.getBasePrice() != null) {
-            product.setBasePrice(request.getBasePrice());
+        if (request.getSellingPrice() != null) {
+            product.setSellingPrice(request.getSellingPrice());
         }
-        if (request.getCompareAtPrice() != null) {
-            product.setCompareAtPrice(request.getCompareAtPrice());
+        if (request.getMarkedPrice() != null) {
+            product.setMarkedPrice(request.getMarkedPrice());
         }
-        if (request.getStockQuantity() != null) {
-            product.setStockQuantity(request.getStockQuantity());
+        if (request.getInStock() != null) {
+            product.setInStock(request.getInStock());
         }
         if (request.getIsActive() != null) {
             product.setIsActive(request.getIsActive());

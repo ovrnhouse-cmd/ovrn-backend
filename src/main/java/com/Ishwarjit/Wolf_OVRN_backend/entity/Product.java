@@ -50,14 +50,14 @@ public class Product {
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
-    @Column(name = "base_price", nullable = false, precision = 10, scale = 2)
-    private BigDecimal basePrice;
+    @Column(name = "selling_price", nullable = false, precision = 10, scale = 2)
+    private BigDecimal sellingPrice;
 
-    @Column(name = "compare_at_price", precision = 10, scale = 2)
-    private BigDecimal compareAtPrice;
+    @Column(name = "marked_price", precision = 10, scale = 2)
+    private BigDecimal markedPrice;
 
-    @Column(name = "stock_quantity", nullable = false)
-    private Integer stockQuantity;
+    @Column(name = "in_stock", nullable = false)
+    private Boolean inStock = true;
 
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;

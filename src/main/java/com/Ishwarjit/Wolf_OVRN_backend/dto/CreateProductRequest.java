@@ -26,14 +26,13 @@ public class CreateProductRequest {
 
     @NotNull
     @DecimalMin(value = "0.00", inclusive = true)
-    private BigDecimal basePrice;
+    private BigDecimal sellingPrice;
 
     @DecimalMin(value = "0.00", inclusive = true)
-    private BigDecimal compareAtPrice;
+    private BigDecimal markedPrice;
 
     @NotNull
-    @Min(0)
-    private Integer stockQuantity;
+    private Boolean inStock;
 
     private UUID categoryId;
 }
