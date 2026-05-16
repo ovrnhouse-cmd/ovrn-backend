@@ -47,8 +47,8 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
-    public Page<ProductSummaryResponse> list(String search, String categorySlug, Pageable pageable) {
-        Specification<Product> spec = buildSpecification(search, categorySlug);
+    public Page<ProductSummaryResponse> list(String search, String categorySlug, Boolean isPremium, Pageable pageable) {
+        Specification<Product> spec = buildSpecification(search, categorySlug, isPremium);
         return productRepository.findAll(spec, pageable).map(product -> {
             List<ProductImage> images = productImageRepository
                     .findByProductIdOrderByDisplayOrderAsc(product.getId());
@@ -185,7 +185,7 @@ public class ProductService {
         return ImageUploadResponse.from(saved);
     }
 
-    private Specification<Product> buildSpecification(String search, String categorySlug) {
+    private Specification<Product> buildSpecification(String search, String categorySlug, Boolean isPremium) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
             if (search != null && !search.isBlank()) {
@@ -194,6 +194,9 @@ public class ProductService {
             if (categorySlug != null && !categorySlug.isBlank()) {
                 Join<Product, Category> categoryJoin = root.join("category");
                 predicates.add(cb.equal(categoryJoin.get("slug"), categorySlug));
+            }
+            if (isPremium != null) {
+                predicates.add(cb.equal(root.get("isPremium"), isPremium));
             }
             return predicates.isEmpty() ? null : cb.and(predicates.toArray(new Predicate[0]));
         };

@@ -44,9 +44,10 @@ public class ProductController {
             @RequestParam(defaultValue = "20") int limit,
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String category,
+            @RequestParam(required = false) Boolean isPremium,
             @RequestParam(required = false) String sort) {
         Pageable pageable = PageRequest.of(Math.max(page, 0), Math.max(limit, 1), parseSort(sort));
-        return ResponseEntity.ok(ApiResponse.ok(productService.list(search, category, pageable)));
+        return ResponseEntity.ok(ApiResponse.ok(productService.list(search, category, isPremium, pageable)));
     }
 
     @GetMapping("/{slug}")
