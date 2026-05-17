@@ -34,7 +34,7 @@ Supports pagination, search, category filtering, and sorting.
 curl -X GET "http://localhost:8080/api/products?page=0&limit=10"
 
 # Search and filter
-curl -X GET "http://localhost:8080/api/products?search=phone&category=electronics&isPremium=true"
+curl -X GET "http://localhost:8080/api/products?search=phone&category=electronics&isPremium=true&minPrice=1000&maxPrice=5000"
 
 # Sorting (field,direction)
 curl -X GET "http://localhost:8080/api/products?sort=price,desc"

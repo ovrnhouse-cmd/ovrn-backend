@@ -47,8 +47,8 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
-    public Page<ProductSummaryResponse> list(String search, String categorySlug, Boolean isPremium, Pageable pageable) {
-        Specification<Product> spec = buildSpecification(search, categorySlug, isPremium);
+    public Page<ProductSummaryResponse> list(String search, String categorySlug, Boolean isPremium, java.math.BigDecimal minPrice, java.math.BigDecimal maxPrice, Pageable pageable) {
+        Specification<Product> spec = buildSpecification(search, categorySlug, isPremium, minPrice, maxPrice);
         return productRepository.findAll(spec, pageable).map(product -> {
             List<ProductImage> images = productImageRepository
                     .findByProductIdOrderByDisplayOrderAsc(product.getId());
@@ -185,7 +185,7 @@ public class ProductService {
         return ImageUploadResponse.from(saved);
     }
 
-    private Specification<Product> buildSpecification(String search, String categorySlug, Boolean isPremium) {
+    private Specification<Product> buildSpecification(String search, String categorySlug, Boolean isPremium, java.math.BigDecimal minPrice, java.math.BigDecimal maxPrice) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
             if (search != null && !search.isBlank()) {
@@ -197,6 +197,12 @@ public class ProductService {
             }
             if (isPremium != null) {
                 predicates.add(cb.equal(root.get("isPremium"), isPremium));
+            }
+            if (minPrice != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("sellingPrice"), minPrice));
+            }
+            if (maxPrice != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("sellingPrice"), maxPrice));
             }
             return predicates.isEmpty() ? null : cb.and(predicates.toArray(new Predicate[0]));
         };
