@@ -9,7 +9,10 @@ import com.Ishwarjit.Wolf_OVRN_backend.dto.UpdateProductRequest;
 import com.Ishwarjit.Wolf_OVRN_backend.service.ProductService;
 import jakarta.validation.Valid;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
+import com.Ishwarjit.Wolf_OVRN_backend.dto.ProductImageRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -33,9 +36,11 @@ import org.springframework.web.multipart.MultipartFile;
 public class ProductController {
 
     private final ProductService productService;
+    private final com.Ishwarjit.Wolf_OVRN_backend.service.CloudinaryService cloudinaryService;
 
-    public ProductController(ProductService productService) {
+    public ProductController(ProductService productService, com.Ishwarjit.Wolf_OVRN_backend.service.CloudinaryService cloudinaryService) {
         this.productService = productService;
+        this.cloudinaryService = cloudinaryService;
     }
 
     @GetMapping
@@ -57,16 +62,105 @@ public class ProductController {
         return ResponseEntity.ok(ApiResponse.ok(productService.getBySlug(slug)));
     }
 
-    @PostMapping
-    public ResponseEntity<ApiResponse<ProductDetailResponse>> create(@Valid @RequestBody CreateProductRequest request) {
+    @PostMapping(consumes = "application/json")
+    public ResponseEntity<ApiResponse<ProductDetailResponse>> createJson(@Valid @RequestBody CreateProductRequest request) {
         ProductDetailResponse created = productService.create(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.created(created));
     }
 
-    @PatchMapping("/{id}")
-    public ResponseEntity<ApiResponse<ProductDetailResponse>> update(
+    @PostMapping(consumes = "multipart/form-data")
+    public ResponseEntity<ApiResponse<ProductDetailResponse>> createMultipart(
+            @RequestPart("product") @Valid CreateProductRequest request,
+            @RequestPart(value = "primaryImage", required = false) MultipartFile primaryImage,
+            @RequestPart(value = "images", required = false) List<MultipartFile> images) throws IOException {
+        
+        List<ProductImageRequest> imageRequests = new ArrayList<>();
+        
+        if (primaryImage != null && !primaryImage.isEmpty()) {
+            validateImage(primaryImage);
+            String primaryUrl = cloudinaryService.upload(primaryImage);
+            ProductImageRequest pir = new ProductImageRequest();
+            pir.setUrl(primaryUrl);
+            pir.setIsPrimary(true);
+            pir.setDisplayOrder(0);
+            pir.setAltText(request.getName());
+            imageRequests.add(pir);
+        }
+        
+        if (images != null && !images.isEmpty()) {
+            for (int i = 0; i < images.size(); i++) {
+                MultipartFile file = images.get(i);
+                if (file != null && !file.isEmpty()) {
+                    validateImage(file);
+                    String url = cloudinaryService.upload(file);
+                    ProductImageRequest pir = new ProductImageRequest();
+                    pir.setUrl(url);
+                    pir.setIsPrimary(false);
+                    pir.setDisplayOrder(i + 1);
+                    pir.setAltText(request.getName());
+                    imageRequests.add(pir);
+                }
+            }
+        }
+        
+        if (!imageRequests.isEmpty()) {
+            request.setImages(imageRequests);
+        }
+        
+        ProductDetailResponse created = productService.create(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.created(created));
+    }
+
+    @PatchMapping(value = "/{id}", consumes = "application/json")
+    public ResponseEntity<ApiResponse<ProductDetailResponse>> updateJson(
             @PathVariable UUID id,
             @Valid @RequestBody UpdateProductRequest request) {
+        return ResponseEntity.ok(ApiResponse.ok(productService.update(id, request), "Updated successfully"));
+    }
+
+    @PatchMapping(value = "/{id}", consumes = "multipart/form-data")
+    public ResponseEntity<ApiResponse<ProductDetailResponse>> updateMultipart(
+            @PathVariable UUID id,
+            @RequestPart("product") @Valid UpdateProductRequest request,
+            @RequestPart(value = "primaryImage", required = false) MultipartFile primaryImage,
+            @RequestPart(value = "images", required = false) List<MultipartFile> images) throws IOException {
+        
+        List<ProductImageRequest> imageRequests = new ArrayList<>();
+        
+        if (primaryImage != null && !primaryImage.isEmpty()) {
+            validateImage(primaryImage);
+            String primaryUrl = cloudinaryService.upload(primaryImage);
+            ProductImageRequest pir = new ProductImageRequest();
+            pir.setUrl(primaryUrl);
+            pir.setIsPrimary(true);
+            pir.setDisplayOrder(0);
+            pir.setAltText(request.getName() != null ? request.getName() : "Product Image");
+            imageRequests.add(pir);
+        }
+        
+        if (images != null && !images.isEmpty()) {
+            for (int i = 0; i < images.size(); i++) {
+                MultipartFile file = images.get(i);
+                if (file != null && !file.isEmpty()) {
+                    validateImage(file);
+                    String url = cloudinaryService.upload(file);
+                    ProductImageRequest pir = new ProductImageRequest();
+                    pir.setUrl(url);
+                    pir.setIsPrimary(false);
+                    pir.setDisplayOrder(i + 1);
+                    pir.setAltText(request.getName() != null ? request.getName() : "Product Image");
+                    imageRequests.add(pir);
+                }
+            }
+        }
+        
+        List<ProductImageRequest> combined = new ArrayList<>();
+        if (request.getImages() != null) {
+            combined.addAll(request.getImages());
+        }
+        combined.addAll(imageRequests);
+        request.setImages(combined);
+        
         return ResponseEntity.ok(ApiResponse.ok(productService.update(id, request), "Updated successfully"));
     }
 
@@ -82,6 +176,19 @@ public class ProductController {
             @RequestPart("file") MultipartFile file) throws IOException {
         ImageUploadResponse response = productService.addImage(id, file);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.created(response));
+    }
+
+    private void validateImage(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            return;
+        }
+        if (file.getSize() > 10 * 1024 * 1024) {
+            throw new IllegalArgumentException("File size exceeds the limit of 10MB: " + file.getOriginalFilename());
+        }
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            throw new IllegalArgumentException("Only image files are allowed: " + file.getOriginalFilename());
+        }
     }
 
     private Sort parseSort(String sort) {

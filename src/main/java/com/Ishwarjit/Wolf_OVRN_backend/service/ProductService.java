@@ -3,6 +3,7 @@ package com.Ishwarjit.Wolf_OVRN_backend.service;
 import com.Ishwarjit.Wolf_OVRN_backend.dto.CreateProductRequest;
 import com.Ishwarjit.Wolf_OVRN_backend.dto.ImageUploadResponse;
 import com.Ishwarjit.Wolf_OVRN_backend.dto.ProductDetailResponse;
+import com.Ishwarjit.Wolf_OVRN_backend.dto.ProductImageRequest;
 import com.Ishwarjit.Wolf_OVRN_backend.dto.ProductSummaryResponse;
 import com.Ishwarjit.Wolf_OVRN_backend.dto.UpdateProductRequest;
 import com.Ishwarjit.Wolf_OVRN_backend.entity.Category;
@@ -102,13 +103,13 @@ public class ProductService {
         // Save images if provided
         List<ProductImage> savedImages = new ArrayList<>();
         if (request.getImages() != null && !request.getImages().isEmpty()) {
-            for (int i = 0; i < request.getImages().size(); i++) {
+            for (ProductImageRequest imgReq : request.getImages()) {
                 ProductImage image = new ProductImage();
                 image.setProduct(saved);
-                image.setUrl(request.getImages().get(i));
-                image.setAltText(saved.getName());
-                image.setIsPrimary(i == 0);
-                image.setDisplayOrder(i);
+                image.setUrl(imgReq.getUrl());
+                image.setAltText(imgReq.getAltText() != null ? imgReq.getAltText() : saved.getName());
+                image.setIsPrimary(Boolean.TRUE.equals(imgReq.getIsPrimary()));
+                image.setDisplayOrder(imgReq.getDisplayOrder() != null ? imgReq.getDisplayOrder() : 0);
                 savedImages.add(productImageRepository.save(image));
             }
         }
@@ -153,6 +154,20 @@ public class ProductService {
         }
 
         Product saved = productRepository.save(product);
+
+        if (request.getImages() != null) {
+            productImageRepository.deleteByProductId(saved.getId());
+            for (ProductImageRequest imgReq : request.getImages()) {
+                ProductImage image = new ProductImage();
+                image.setProduct(saved);
+                image.setUrl(imgReq.getUrl());
+                image.setAltText(imgReq.getAltText() != null ? imgReq.getAltText() : saved.getName());
+                image.setIsPrimary(Boolean.TRUE.equals(imgReq.getIsPrimary()));
+                image.setDisplayOrder(imgReq.getDisplayOrder() != null ? imgReq.getDisplayOrder() : 0);
+                productImageRepository.save(image);
+            }
+        }
+
         List<ProductImage> images = productImageRepository
                 .findByProductIdOrderByDisplayOrderAsc(saved.getId());
         return ProductDetailResponse.from(saved, images);

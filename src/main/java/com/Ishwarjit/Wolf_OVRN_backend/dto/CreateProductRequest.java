@@ -37,5 +37,5 @@ public class CreateProductRequest {
 
     private Boolean isPremium = false;
 
-    private List<String> images;
+    private List<ProductImageRequest> images;
 }

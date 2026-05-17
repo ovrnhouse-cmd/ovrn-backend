@@ -4,6 +4,7 @@ import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 import lombok.Getter;
 import lombok.Setter;
@@ -32,4 +33,6 @@ public class UpdateProductRequest {
     private Boolean isPremium;
 
     private UUID categoryId;
+
+    private List<ProductImageRequest> images;
 }
