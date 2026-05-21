@@ -60,6 +60,7 @@ public class SecurityConfig {
                                                 .requestMatchers(HttpMethod.PATCH, "/api/orders/*").hasRole("ADMIN")
                                                 .requestMatchers(HttpMethod.GET, "/api/users").hasRole("ADMIN")
                                                 .requestMatchers(HttpMethod.PATCH, "/api/users/*/role").hasRole("ADMIN")
+                                                .requestMatchers("/api/cart", "/api/cart/**").authenticated()
                                                 .anyRequest().authenticated())
                                 .oauth2Login(oauth -> oauth
                                                 .userInfoEndpoint(userInfo -> userInfo.userService(oAuth2UserService))
