@@ -69,7 +69,7 @@ public class OrderService {
                     .orElseThrow(() -> new ResourceNotFoundException(
                             "Product not found: " + itemRequest.getProductId()));
 
-            BigDecimal unitPrice = product.getBasePrice();
+            BigDecimal unitPrice = product.getSellingPrice();
             BigDecimal subtotal = unitPrice.multiply(BigDecimal.valueOf(itemRequest.getQuantity()));
 
             OrderItem item = new OrderItem();

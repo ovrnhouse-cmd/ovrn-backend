@@ -50,6 +50,16 @@ if ($env:MVNW_VERBOSE -eq "true") {
   $VerbosePreference = "Continue"
 }
 
+# Load environment variables from .env file if it exists
+if (Test-Path -Path "$scriptDir/.env") {
+  Get-Content "$scriptDir/.env" | Where-Object { $_ -and -not $_.StartsWith("#") } | ForEach-Object {
+    $name, $value = $_.Split('=', 2)
+    if ($name -and $value) {
+      $env:$($name.Trim()) = $value.Trim()
+    }
+  }
+}
+
 # calculate distributionUrl, requires .mvn/wrapper/maven-wrapper.properties
 $distributionUrl = (Get-Content -Raw "$scriptDir/.mvn/wrapper/maven-wrapper.properties" | ConvertFrom-StringData).distributionUrl
 if (!$distributionUrl) {

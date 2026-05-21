@@ -10,10 +10,11 @@ public record ProductSummaryResponse(
         UUID id,
         String name,
         String slug,
-        BigDecimal basePrice,
-        BigDecimal compareAtPrice,
-        Integer stockQuantity,
+        BigDecimal sellingPrice,
+        BigDecimal markedPrice,
+        boolean inStock,
         boolean isActive,
+        boolean isPremium,
         String primaryImageUrl) {
 
     public static ProductSummaryResponse from(Product product, String primaryImageUrl) {
@@ -21,10 +22,11 @@ public record ProductSummaryResponse(
                 product.getId(),
                 product.getName(),
                 product.getSlug(),
-                product.getBasePrice(),
-                product.getCompareAtPrice(),
-                product.getStockQuantity(),
+                product.getSellingPrice(),
+                product.getMarkedPrice(),
+                Boolean.TRUE.equals(product.getInStock()),
                 Boolean.TRUE.equals(product.getIsActive()),
+                Boolean.TRUE.equals(product.getIsPremium()),
                 primaryImageUrl);
     }
 

@@ -11,10 +11,11 @@ public record ProductDetailResponse(
         String name,
         String slug,
         String description,
-        BigDecimal basePrice,
-        BigDecimal compareAtPrice,
-        Integer stockQuantity,
+        BigDecimal sellingPrice,
+        BigDecimal markedPrice,
+        boolean inStock,
         boolean isActive,
+        boolean isPremium,
         CategoryResponse category,
         List<ProductImageResponse> images) {
 
@@ -30,10 +31,11 @@ public record ProductDetailResponse(
                 product.getName(),
                 product.getSlug(),
                 product.getDescription(),
-                product.getBasePrice(),
-                product.getCompareAtPrice(),
-                product.getStockQuantity(),
+                product.getSellingPrice(),
+                product.getMarkedPrice(),
+                Boolean.TRUE.equals(product.getInStock()),
                 Boolean.TRUE.equals(product.getIsActive()),
+                Boolean.TRUE.equals(product.getIsPremium()),
                 category,
                 imageDtos);
     }

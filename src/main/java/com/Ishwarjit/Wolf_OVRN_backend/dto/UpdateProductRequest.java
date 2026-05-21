@@ -4,6 +4,7 @@ import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 import lombok.Getter;
 import lombok.Setter;
@@ -21,15 +22,17 @@ public class UpdateProductRequest {
     private String description;
 
     @DecimalMin(value = "0.00", inclusive = true)
-    private BigDecimal basePrice;
+    private BigDecimal sellingPrice;
 
     @DecimalMin(value = "0.00", inclusive = true)
-    private BigDecimal compareAtPrice;
+    private BigDecimal markedPrice;
 
-    @Min(0)
-    private Integer stockQuantity;
+    private Boolean inStock;
 
     private Boolean isActive;
+    private Boolean isPremium;
 
     private UUID categoryId;
+
+    private List<ProductImageRequest> images;
 }
