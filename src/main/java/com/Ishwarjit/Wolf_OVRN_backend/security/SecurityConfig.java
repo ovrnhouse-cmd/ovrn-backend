@@ -3,6 +3,7 @@ package com.Ishwarjit.Wolf_OVRN_backend.security;
 import com.Ishwarjit.Wolf_OVRN_backend.service.CustomOAuth2UserService;
 import jakarta.servlet.http.HttpServletResponse;
 import java.time.OffsetDateTime;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -22,16 +23,19 @@ public class SecurityConfig {
         private final OAuth2SuccessHandler oAuth2SuccessHandler;
         private final JwtAuthenticationFilter jwtAuthenticationFilter;
         private final CorsConfigurationSource corsConfigurationSource;
+        private final String frontendRedirectUrl;
 
         public SecurityConfig(
                         CustomOAuth2UserService oAuth2UserService,
                         OAuth2SuccessHandler oAuth2SuccessHandler,
                         JwtAuthenticationFilter jwtAuthenticationFilter,
-                        CorsConfigurationSource corsConfigurationSource) {
+                        CorsConfigurationSource corsConfigurationSource,
+                        @Value("${app.frontend.redirect-url}") String frontendRedirectUrl) {
                 this.oAuth2UserService = oAuth2UserService;
                 this.oAuth2SuccessHandler = oAuth2SuccessHandler;
                 this.jwtAuthenticationFilter = jwtAuthenticationFilter;
                 this.corsConfigurationSource = corsConfigurationSource;
+                this.frontendRedirectUrl = frontendRedirectUrl;
         }
 
         @Bean
@@ -65,7 +69,9 @@ public class SecurityConfig {
                                                 .anyRequest().authenticated())
                                 .oauth2Login(oauth -> oauth
                                                 .userInfoEndpoint(userInfo -> userInfo.userService(oAuth2UserService))
-                                                .successHandler(oAuth2SuccessHandler))
+                                                .successHandler(oAuth2SuccessHandler)
+                                                .failureHandler((request, response, exception) ->
+                                                                response.sendRedirect(frontendRedirectUrl + "signin?error=true")))
                                 .exceptionHandling(exceptions -> exceptions
                                                 .authenticationEntryPoint((request, response, authException) -> {
                                                         if (request.getRequestURI().startsWith("/api/")) {
