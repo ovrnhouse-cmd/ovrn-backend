@@ -58,6 +58,9 @@ app:
     domain: ${COOKIE_DOMAIN:}
   cors:
     allowed-origin: ${CORS_ALLOWED_ORIGIN:http://localhost:3000}
+  razorpay:
+    key-id: ${RAZORPAY_KEY_ID}
+    key-secret: ${RAZORPAY_KEY_SECRET}
 
 management:
   endpoints:
