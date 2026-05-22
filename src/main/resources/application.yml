@@ -74,7 +74,12 @@ management:
 logging:
   level:
     org.springframework.security: INFO
-    org.hibernate.SQL: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.transaction: DEBUG
+    org.springframework.transaction: TRACE
+    org.springframework.web: DEBUG
+    jakarta.validation: DEBUG
+
 
 ---
 spring:

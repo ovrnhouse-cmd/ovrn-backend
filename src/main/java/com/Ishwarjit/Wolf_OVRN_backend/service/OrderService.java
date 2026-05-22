@@ -15,6 +15,7 @@ import com.Ishwarjit.Wolf_OVRN_backend.repository.ProductRepository;
 import com.Ishwarjit.Wolf_OVRN_backend.repository.UserRepository;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -59,8 +60,8 @@ public class OrderService {
         Order order = new Order();
         order.setUser(user);
         order.setStatus(OrderStatus.PENDING);
-        order.setShippingAddress(request.getShippingAddress());
-        order.setBillingAddress(request.getBillingAddress());
+        order.setShippingAddress(normalizeAddress(request.getShippingAddress()));
+        order.setBillingAddress(normalizeAddress(request.getBillingAddress()));
         order.setNotes(request.getNotes());
 
         BigDecimal total = BigDecimal.ZERO;
@@ -106,5 +107,19 @@ public class OrderService {
 
         Order saved = orderRepository.save(order);
         return OrderResponse.from(saved);
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> normalizeAddress(Object address) {
+        if (address == null) {
+            return null;
+        }
+        if (address instanceof Map) {
+            return (Map<String, Object>) address;
+        }
+        if (address instanceof String str) {
+            return Map.of("fullAddress", str);
+        }
+        return Map.of("fullAddress", address.toString());
     }
 }

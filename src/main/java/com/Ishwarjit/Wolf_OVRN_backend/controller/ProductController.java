@@ -59,7 +59,12 @@ public class ProductController {
 
     @GetMapping("/{slug}")
     public ResponseEntity<ApiResponse<ProductDetailResponse>> get(@PathVariable String slug) {
-        return ResponseEntity.ok(ApiResponse.ok(productService.getBySlug(slug)));
+        try {
+            UUID id = UUID.fromString(slug);
+            return ResponseEntity.ok(ApiResponse.ok(productService.getById(id)));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.ok(ApiResponse.ok(productService.getBySlug(slug)));
+        }
     }
 
     @PostMapping(consumes = "application/json")

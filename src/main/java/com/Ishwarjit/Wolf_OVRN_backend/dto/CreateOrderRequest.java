@@ -17,9 +17,9 @@ public class CreateOrderRequest {
     private List<OrderItemRequest> items;
 
     @NotNull
-    private Map<String, Object> shippingAddress;
+    private Object shippingAddress;
 
-    private Map<String, Object> billingAddress;
+    private Object billingAddress;
 
     private String notes;
 }
