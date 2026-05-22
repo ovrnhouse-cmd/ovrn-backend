@@ -67,14 +67,8 @@ public class Order {
     @Column(name = "notes", columnDefinition = "TEXT")
     private String notes;
 
-    @Column(name = "razorpay_order_id")
-    private String razorpayOrderId;
-
-    @Column(name = "razorpay_payment_id")
-    private String razorpayPaymentId;
-
-    @Column(name = "paid_at")
-    private OffsetDateTime paidAt;
+    @OneToMany(mappedBy = "order", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<PaymentTransaction> paymentTransactions = new ArrayList<>();
 
     @OneToMany(mappedBy = "order", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> items = new ArrayList<>();

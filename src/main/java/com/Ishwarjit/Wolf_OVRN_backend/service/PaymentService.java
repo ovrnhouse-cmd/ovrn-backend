@@ -5,10 +5,12 @@ import com.Ishwarjit.Wolf_OVRN_backend.dto.PaymentVerifyResponse;
 import com.Ishwarjit.Wolf_OVRN_backend.dto.RazorpayOrderResponse;
 import com.Ishwarjit.Wolf_OVRN_backend.entity.Order;
 import com.Ishwarjit.Wolf_OVRN_backend.entity.OrderStatus;
+import com.Ishwarjit.Wolf_OVRN_backend.entity.PaymentTransaction;
 import com.Ishwarjit.Wolf_OVRN_backend.exception.BadRequestException;
 import com.Ishwarjit.Wolf_OVRN_backend.exception.ResourceNotFoundException;
 import com.Ishwarjit.Wolf_OVRN_backend.exception.UnauthorizedException;
 import com.Ishwarjit.Wolf_OVRN_backend.repository.OrderRepository;
+import com.Ishwarjit.Wolf_OVRN_backend.repository.PaymentTransactionRepository;
 import com.razorpay.RazorpayClient;
 import com.razorpay.RazorpayException;
 import com.razorpay.Utils;
@@ -25,14 +27,17 @@ import org.springframework.transaction.annotation.Transactional;
 public class PaymentService {
 
     private final OrderRepository orderRepository;
+    private final PaymentTransactionRepository paymentTransactionRepository;
     private final RazorpayClient razorpayClient;
     private final String keySecret;
 
     public PaymentService(
             OrderRepository orderRepository,
+            PaymentTransactionRepository paymentTransactionRepository,
             RazorpayClient razorpayClient,
             @Value("${app.razorpay.key-secret}") String keySecret) {
         this.orderRepository = orderRepository;
+        this.paymentTransactionRepository = paymentTransactionRepository;
         this.razorpayClient = razorpayClient;
         this.keySecret = keySecret;
     }
@@ -66,18 +71,24 @@ public class PaymentService {
         }
 
         String razorpayOrderId = razorpayOrder.get("id");
-        order.setRazorpayOrderId(razorpayOrderId);
-        orderRepository.save(order);
+        
+        PaymentTransaction transaction = new PaymentTransaction();
+        transaction.setOrder(order);
+        transaction.setRazorpayOrderId(razorpayOrderId);
+        transaction.setAmount(order.getTotalAmount());
+        transaction.setStatus("CREATED");
+        paymentTransactionRepository.save(transaction);
 
         return new RazorpayOrderResponse(razorpayOrderId, amountInPaise, "INR", orderId);
     }
 
     @Transactional
     public PaymentVerifyResponse verifyPayment(PaymentVerifyRequest request, String userId) {
-        Order order = orderRepository.findByRazorpayOrderId(request.getRazorpayOrderId())
+        PaymentTransaction transaction = paymentTransactionRepository.findByRazorpayOrderId(request.getRazorpayOrderId())
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Order not found for razorpay_order_id: " + request.getRazorpayOrderId()));
+                        "Payment transaction not found for razorpay_order_id: " + request.getRazorpayOrderId()));
 
+        Order order = transaction.getOrder();
         if (order.getUser() == null || !order.getUser().getId().toString().equals(userId)) {
             throw new AccessDeniedException("You can only verify payments on your own orders");
         }
@@ -94,12 +105,17 @@ public class PaymentService {
         }
 
         if (valid) {
+            transaction.setStatus("SUCCESS");
+            transaction.setRazorpayPaymentId(request.getRazorpayPaymentId());
+            paymentTransactionRepository.save(transaction);
+
             order.setStatus(OrderStatus.PAID);
-            order.setRazorpayPaymentId(request.getRazorpayPaymentId());
-            order.setPaidAt(OffsetDateTime.now());
             orderRepository.save(order);
             return new PaymentVerifyResponse(true, order.getId(), "Payment verified successfully");
         }
+
+        transaction.setStatus("FAILED");
+        paymentTransactionRepository.save(transaction);
 
         return new PaymentVerifyResponse(false, order.getId(), "Payment verification failed");
     }

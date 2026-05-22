@@ -100,7 +100,8 @@ curl -X GET "http://localhost:8080/api/orders?page=0&limit=10"
 curl -X GET http://localhost:8080/api/orders/me
 ```
 
-### Create Order
+### Create Order (Step 1)
+Creates an application order and calculates the total amount securely on the backend.
 ```bash
 curl -X POST http://localhost:8080/api/orders \
   -H "Content-Type: application/json" \
@@ -111,16 +112,33 @@ curl -X POST http://localhost:8080/api/orders \
         "quantity": 2
       }
     ],
-    "shippingAddress": "123 Main St, City, Country"
+    "shippingAddress": { "address": "123 Main St, City, Country" }
   }'
 ```
 
-### Update Order Status (Admin)
+---
+
+## 💳 Payments
+
+### Create Payment (Step 2)
+Initiates a payment for an existing order. **Note: Do NOT pass the amount.** The backend automatically fetches the exact amount from the previously created Order. You can call this endpoint multiple times if a user cancels and retries.
 ```bash
-curl -X PATCH http://localhost:8080/api/orders/{uuid} \
+curl -X POST http://localhost:8080/api/payments/create-order \
   -H "Content-Type: application/json" \
   -d '{
-    "status": "SHIPPED"
+    "orderId": "{order_uuid}"
+  }'
+```
+
+### Verify Payment (Step 3)
+Verifies the Razorpay signature after the user successfully completes the payment on the frontend.
+```bash
+curl -X POST http://localhost:8080/api/payments/verify \
+  -H "Content-Type: application/json" \
+  -d '{
+    "razorpayOrderId": "order_xyz123",
+    "razorpayPaymentId": "pay_abc456",
+    "razorpaySignature": "signature_hash_here"
   }'
 ```
 

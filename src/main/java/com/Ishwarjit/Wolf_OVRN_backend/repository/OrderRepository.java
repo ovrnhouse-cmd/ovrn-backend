@@ -16,5 +16,4 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
 
     List<Order> findByUserIdOrderByCreatedAtDesc(UUID userId);
 
-    Optional<Order> findByRazorpayOrderId(String razorpayOrderId);
 }
