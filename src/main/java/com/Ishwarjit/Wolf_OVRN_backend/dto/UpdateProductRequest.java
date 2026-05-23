@@ -35,4 +35,6 @@ public class UpdateProductRequest {
     private UUID categoryId;
 
     private List<ProductImageRequest> images;
+
+    private List<String> sizes;
 }

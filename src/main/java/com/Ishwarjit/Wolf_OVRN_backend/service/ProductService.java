@@ -91,6 +91,22 @@ public class ProductService {
         product.setIsActive(true);
         product.setIsPremium(Boolean.TRUE.equals(request.getIsPremium()));
 
+        if (request.getSizes() != null) {
+            product.setAvailableSizes(request.getSizes());
+        }
+
+        if (request.getSellingPrice().compareTo(java.math.BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Selling price cannot be less than 0.");
+        }
+        if (request.getMarkedPrice() != null) {
+            if (request.getMarkedPrice().compareTo(java.math.BigDecimal.ZERO) < 0) {
+                throw new IllegalArgumentException("Marked price cannot be less than 0.");
+            }
+            if (request.getMarkedPrice().compareTo(request.getSellingPrice()) <= 0) {
+                throw new IllegalArgumentException("Marked price must be strictly greater than selling price.");
+            }
+        }
+
         if (request.getCategoryId() != null) {
             Category category = categoryRepository.findById(request.getCategoryId())
                     .orElseThrow(() -> new ResourceNotFoundException(
@@ -145,6 +161,24 @@ public class ProductService {
         }
         if (request.getIsPremium() != null) {
             product.setIsPremium(request.getIsPremium());
+        }
+        if (request.getSizes() != null) {
+            product.setAvailableSizes(request.getSizes());
+        }
+
+        java.math.BigDecimal currentSellingPrice = request.getSellingPrice() != null ? request.getSellingPrice() : product.getSellingPrice();
+        java.math.BigDecimal currentMarkedPrice = request.getMarkedPrice() != null ? request.getMarkedPrice() : product.getMarkedPrice();
+
+        if (currentSellingPrice != null && currentSellingPrice.compareTo(java.math.BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Selling price cannot be less than 0.");
+        }
+        if (currentMarkedPrice != null) {
+            if (currentMarkedPrice.compareTo(java.math.BigDecimal.ZERO) < 0) {
+                throw new IllegalArgumentException("Marked price cannot be less than 0.");
+            }
+            if (currentSellingPrice != null && currentMarkedPrice.compareTo(currentSellingPrice) <= 0) {
+                throw new IllegalArgumentException("Marked price must be strictly greater than selling price.");
+            }
         }
         if (request.getCategoryId() != null) {
             Category category = categoryRepository.findById(request.getCategoryId())

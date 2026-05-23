@@ -17,7 +17,8 @@ public record ProductDetailResponse(
         boolean isActive,
         boolean isPremium,
         CategoryResponse category,
-        List<ProductImageResponse> images) {
+        List<ProductImageResponse> images,
+        List<String> sizes) {
 
     public static ProductDetailResponse from(Product product, List<ProductImage> images) {
         CategoryResponse category = product.getCategory() != null
@@ -37,6 +38,7 @@ public record ProductDetailResponse(
                 Boolean.TRUE.equals(product.getIsActive()),
                 Boolean.TRUE.equals(product.getIsPremium()),
                 category,
-                imageDtos);
+                imageDtos,
+                product.getAvailableSizes());
     }
 }

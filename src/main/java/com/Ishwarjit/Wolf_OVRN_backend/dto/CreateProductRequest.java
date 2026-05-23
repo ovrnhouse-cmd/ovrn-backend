@@ -38,4 +38,6 @@ public class CreateProductRequest {
     private Boolean isPremium = false;
 
     private List<ProductImageRequest> images;
+
+    private List<String> sizes;
 }
