@@ -1,0 +1,15 @@
+CREATE TABLE product_metric_logs (
+    id UUID PRIMARY KEY,
+    product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+    action_type VARCHAR(50) NOT NULL,
+    user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE product_stats (
+    product_id UUID PRIMARY KEY REFERENCES products(id) ON DELETE CASCADE,
+    total_views BIGINT NOT NULL DEFAULT 0,
+    total_sales BIGINT NOT NULL DEFAULT 0,
+    total_cart_additions BIGINT NOT NULL DEFAULT 0,
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
