@@ -107,11 +107,12 @@ public class ProductService {
             }
         }
 
-        if (request.getCategoryId() != null) {
-            Category category = categoryRepository.findById(request.getCategoryId())
-                    .orElseThrow(() -> new ResourceNotFoundException(
-                            "Category not found: " + request.getCategoryId()));
-            product.setCategory(category);
+        if (request.getCategoryIds() != null && !request.getCategoryIds().isEmpty()) {
+            List<Category> categories = categoryRepository.findAllById(request.getCategoryIds());
+            if (categories.size() != request.getCategoryIds().size()) {
+                throw new ResourceNotFoundException("One or more categories not found");
+            }
+            product.setCategories(categories);
         }
 
         Product saved = productRepository.save(product);
@@ -180,11 +181,12 @@ public class ProductService {
                 throw new IllegalArgumentException("Marked price must be strictly greater than selling price.");
             }
         }
-        if (request.getCategoryId() != null) {
-            Category category = categoryRepository.findById(request.getCategoryId())
-                    .orElseThrow(() -> new ResourceNotFoundException(
-                            "Category not found: " + request.getCategoryId()));
-            product.setCategory(category);
+        if (request.getCategoryIds() != null) {
+            List<Category> categories = categoryRepository.findAllById(request.getCategoryIds());
+            if (categories.size() != request.getCategoryIds().size()) {
+                throw new ResourceNotFoundException("One or more categories not found");
+            }
+            product.setCategories(categories);
         }
 
         Product saved = productRepository.save(product);
@@ -241,7 +243,7 @@ public class ProductService {
                 predicates.add(cb.like(cb.lower(root.get("name")), "%" + search.toLowerCase() + "%"));
             }
             if (categorySlug != null && !categorySlug.isBlank()) {
-                Join<Product, Category> categoryJoin = root.join("category");
+                Join<Product, Category> categoryJoin = root.join("categories");
                 predicates.add(cb.equal(categoryJoin.get("slug"), categorySlug));
             }
             if (isPremium != null) {

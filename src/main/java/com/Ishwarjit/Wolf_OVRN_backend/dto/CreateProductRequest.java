@@ -33,7 +33,7 @@ public class CreateProductRequest {
     @NotNull
     private Boolean inStock;
 
-    private UUID categoryId;
+    private List<UUID> categoryIds;
 
     private Boolean isPremium = false;
 

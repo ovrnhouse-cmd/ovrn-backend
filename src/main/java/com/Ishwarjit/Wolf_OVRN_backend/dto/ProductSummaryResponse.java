@@ -5,6 +5,7 @@ import com.Ishwarjit.Wolf_OVRN_backend.entity.ProductImage;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public record ProductSummaryResponse(
         UUID id,
@@ -15,9 +16,14 @@ public record ProductSummaryResponse(
         boolean inStock,
         boolean isActive,
         boolean isPremium,
-        String primaryImageUrl) {
+        String primaryImageUrl,
+        List<String> availableSizes,
+        List<CategoryResponse> categories) {
 
     public static ProductSummaryResponse from(Product product, String primaryImageUrl) {
+        List<CategoryResponse> categoryResponses = product.getCategories() == null ? List.of() : 
+            product.getCategories().stream().map(CategoryResponse::from).collect(Collectors.toList());
+
         return new ProductSummaryResponse(
                 product.getId(),
                 product.getName(),
@@ -27,7 +33,9 @@ public record ProductSummaryResponse(
                 Boolean.TRUE.equals(product.getInStock()),
                 Boolean.TRUE.equals(product.getIsActive()),
                 Boolean.TRUE.equals(product.getIsPremium()),
-                primaryImageUrl);
+                primaryImageUrl,
+                product.getAvailableSizes() == null ? List.of() : product.getAvailableSizes(),
+                categoryResponses);
     }
 
     public static ProductSummaryResponse from(Product product, List<ProductImage> images) {

@@ -32,7 +32,7 @@ public class UpdateProductRequest {
     private Boolean isActive;
     private Boolean isPremium;
 
-    private UUID categoryId;
+    private List<UUID> categoryIds;
 
     private List<ProductImageRequest> images;
 

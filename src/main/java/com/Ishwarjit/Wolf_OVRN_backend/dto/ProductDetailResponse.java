@@ -16,14 +16,14 @@ public record ProductDetailResponse(
         boolean inStock,
         boolean isActive,
         boolean isPremium,
-        CategoryResponse category,
+        List<CategoryResponse> categories,
         List<ProductImageResponse> images,
         List<String> sizes) {
 
     public static ProductDetailResponse from(Product product, List<ProductImage> images) {
-        CategoryResponse category = product.getCategory() != null
-                ? CategoryResponse.from(product.getCategory())
-                : null;
+        List<CategoryResponse> categories = product.getCategories().stream()
+                .map(CategoryResponse::from)
+                .toList();
         List<ProductImageResponse> imageDtos = images.stream()
                 .map(ProductImageResponse::from)
                 .toList();
@@ -37,7 +37,7 @@ public record ProductDetailResponse(
                 Boolean.TRUE.equals(product.getInStock()),
                 Boolean.TRUE.equals(product.getIsActive()),
                 Boolean.TRUE.equals(product.getIsPremium()),
-                category,
+                categories,
                 imageDtos,
                 product.getAvailableSizes());
     }
