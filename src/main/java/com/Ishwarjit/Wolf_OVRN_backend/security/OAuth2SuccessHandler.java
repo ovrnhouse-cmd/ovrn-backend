@@ -80,7 +80,13 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         refreshCookie.setAttribute("SameSite", "Lax");
         response.addCookie(refreshCookie);
 
-        getRedirectStrategy().sendRedirect(request, response, frontendRedirectUrl);
+        // Append ?auth=1 so the frontend knows to call /api/auth/refresh
+        // immediately — avoids the race condition where cookies are not yet
+        // committed by the time the JS on the landing page runs.
+        String redirectTarget = frontendRedirectUrl.endsWith("/")
+                ? frontendRedirectUrl + "?auth=1"
+                : frontendRedirectUrl + "/?auth=1";
+        getRedirectStrategy().sendRedirect(request, response, redirectTarget);
     }
 }
 

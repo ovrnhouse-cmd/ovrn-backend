@@ -240,7 +240,14 @@ public class ProductService {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
             if (search != null && !search.isBlank()) {
-                predicates.add(cb.like(cb.lower(root.get("name")), "%" + search.toLowerCase() + "%"));
+                String[] terms = search.toLowerCase().trim().split("\\s+");
+                Predicate[] termPredicates = new Predicate[terms.length];
+                for (int i = 0; i < terms.length; i++) {
+                    Predicate nameMatch = cb.like(cb.lower(root.get("name")), "%" + terms[i] + "%");
+                    Predicate descMatch = cb.like(cb.lower(root.get("description")), "%" + terms[i] + "%");
+                    termPredicates[i] = cb.or(nameMatch, descMatch);
+                }
+                predicates.add(cb.or(termPredicates));
             }
             if (categorySlug != null && !categorySlug.isBlank()) {
                 Join<Product, Category> categoryJoin = root.join("categories");

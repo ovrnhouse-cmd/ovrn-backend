@@ -83,9 +83,30 @@ logging:
 
 
 ---
+# ─────────────────────────────────────────────────────────────────────────────
+# Production profile — activated with: SPRING_PROFILES_ACTIVE=prod
+#
+# Environment variables you MUST set on the server / Docker / Railway:
+#
+#   COOKIE_SECURE=true
+#   COOKIE_DOMAIN=.ovrn.in          ← leading dot = covers ovrn.in AND api.ovrn.in
+#   CORS_ALLOWED_ORIGIN=https://ovrn.in
+#   FRONTEND_REDIRECT_URL=https://ovrn.in/
+#   COOKIE_SAMESITE=Lax             ← same registrable domain → Lax is fine
+#
+# ─────────────────────────────────────────────────────────────────────────────
 spring:
   config:
     activate:
       on-profile: prod
   jpa:
     show-sql: false
+
+logging:
+  level:
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN
+    org.springframework.web: WARN
+    org.hibernate.transaction: WARN
+    org.springframework.transaction: WARN
+    jakarta.validation: WARN

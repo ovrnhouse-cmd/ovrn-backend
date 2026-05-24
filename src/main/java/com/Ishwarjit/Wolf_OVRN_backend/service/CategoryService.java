@@ -4,6 +4,9 @@ import com.Ishwarjit.Wolf_OVRN_backend.dto.CategoryResponse;
 import com.Ishwarjit.Wolf_OVRN_backend.repository.CategoryRepository;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.Ishwarjit.Wolf_OVRN_backend.dto.CategoryRequest;
@@ -21,10 +24,10 @@ public class CategoryService {
     }
 
     @Transactional(readOnly = true)
-    public List<CategoryResponse> listAll() {
-        return categoryRepository.findAll().stream()
-                .map(CategoryResponse::from)
-                .toList();
+    public Page<CategoryResponse> listAll(int page, int limit) {
+        Pageable pageable = PageRequest.of(Math.max(page, 0), Math.max(limit, 1));
+        return categoryRepository.findAll(pageable)
+                .map(CategoryResponse::from);
     }
 
     @Transactional

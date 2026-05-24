@@ -7,6 +7,8 @@ import com.Ishwarjit.Wolf_OVRN_backend.dto.CategoryRequest;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -29,8 +31,10 @@ public class CategoryController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<CategoryResponse>>> list() {
-        return ResponseEntity.ok(ApiResponse.ok(categoryService.listAll()));
+    public ResponseEntity<ApiResponse<Page<CategoryResponse>>> list(
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "0") int page,
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "20") int limit) {
+        return ResponseEntity.ok(ApiResponse.ok(categoryService.listAll(page, limit)));
     }
 
     @PostMapping

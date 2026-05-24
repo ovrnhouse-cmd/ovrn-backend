@@ -70,6 +70,12 @@ public class SecurityConfig {
                                                 .requestMatchers(HttpMethod.POST, "/api/feature-carousel").hasRole("ADMIN")
                                                 .requestMatchers(HttpMethod.PUT, "/api/feature-carousel/*").hasRole("ADMIN")
                                                 .requestMatchers(HttpMethod.DELETE, "/api/feature-carousel/*").hasRole("ADMIN")
+                                                // Banner texts — public read, admin write
+                                                .requestMatchers(HttpMethod.GET, "/api/banner-texts").permitAll()
+                                                .requestMatchers(HttpMethod.GET, "/api/banner-texts/all").hasRole("ADMIN")
+                                                .requestMatchers(HttpMethod.POST, "/api/banner-texts").hasRole("ADMIN")
+                                                .requestMatchers(HttpMethod.PUT, "/api/banner-texts/*").hasRole("ADMIN")
+                                                .requestMatchers(HttpMethod.DELETE, "/api/banner-texts/*").hasRole("ADMIN")
                                                 .requestMatchers(HttpMethod.GET, "/api/orders").hasRole("ADMIN")
                                                 .requestMatchers(HttpMethod.PATCH, "/api/orders/*").hasRole("ADMIN")
                                                 .requestMatchers(HttpMethod.GET, "/api/users").hasRole("ADMIN")
