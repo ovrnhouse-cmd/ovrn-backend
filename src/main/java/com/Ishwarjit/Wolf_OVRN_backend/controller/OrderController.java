@@ -50,6 +50,13 @@ public class OrderController {
         return ResponseEntity.ok(ApiResponse.ok(orderService.getMyOrders(currentUserId())));
     }
 
+    @GetMapping("/fulfillment")
+    public ResponseEntity<ApiResponse<List<com.Ishwarjit.Wolf_OVRN_backend.dto.ProductFulfillmentDto>>> getFulfillmentSummary(
+            @RequestParam(required = true) List<com.Ishwarjit.Wolf_OVRN_backend.entity.OrderStatus> statuses,
+            @RequestParam(required = false) List<UUID> productIds) {
+        return ResponseEntity.ok(ApiResponse.ok(orderService.getFulfillmentSummary(statuses, productIds)));
+    }
+
     @PostMapping
     public ResponseEntity<ApiResponse<OrderResponse>> create(@Valid @RequestBody CreateOrderRequest request) {
         OrderResponse created = orderService.createOrder(request, currentUserId());
@@ -61,6 +68,13 @@ public class OrderController {
             @PathVariable UUID id,
             @Valid @RequestBody UpdateOrderRequest request) {
         return ResponseEntity.ok(ApiResponse.ok(orderService.updateOrderStatus(id, request), "Updated successfully"));
+    }
+
+    @PatchMapping("/bulk-status")
+    public ResponseEntity<ApiResponse<Integer>> bulkUpdateStatus(
+            @Valid @RequestBody com.Ishwarjit.Wolf_OVRN_backend.dto.BulkOrderStatusUpdateRequest request) {
+        int updatedCount = orderService.bulkUpdateOrderStatus(request);
+        return ResponseEntity.ok(ApiResponse.ok(updatedCount, "Bulk update successful"));
     }
 
     private String currentUserId() {

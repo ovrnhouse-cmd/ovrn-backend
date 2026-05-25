@@ -109,6 +109,29 @@ public class OrderService {
         return OrderResponse.from(saved);
     }
 
+    @Transactional
+    public int bulkUpdateOrderStatus(com.Ishwarjit.Wolf_OVRN_backend.dto.BulkOrderStatusUpdateRequest request) {
+        if (request.getOrderIds() == null || request.getOrderIds().isEmpty()) {
+            throw new IllegalArgumentException("No orders specified for bulk update");
+        }
+        return orderRepository.bulkUpdateStatus(request.getOrderIds(), request.getNewStatus());
+    }
+
+    @Transactional(readOnly = true)
+    public List<com.Ishwarjit.Wolf_OVRN_backend.dto.ProductFulfillmentDto> getFulfillmentSummary(
+            List<OrderStatus> statuses, List<UUID> productIds) {
+        
+        if (statuses == null || statuses.isEmpty()) {
+            throw new IllegalArgumentException("At least one order status must be provided");
+        }
+
+        boolean filterByProducts = (productIds != null && !productIds.isEmpty());
+        // To avoid JPA "empty list" errors in IN clause, pass a dummy list if empty
+        List<UUID> safeProductIds = filterByProducts ? productIds : List.of(UUID.randomUUID());
+
+        return orderRepository.getFulfillmentAggregation(statuses, safeProductIds, filterByProducts);
+    }
+
     @SuppressWarnings("unchecked")
     private Map<String, Object> normalizeAddress(Object address) {
         if (address == null) {
