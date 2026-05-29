@@ -31,4 +31,15 @@ public record DropEventResponse(
                 Boolean.TRUE.equals(dropEvent.getIsActive()),
                 productDtos);
     }
+
+    public static DropEventResponse fromWithoutProducts(DropEvent dropEvent) {
+        return new DropEventResponse(
+                dropEvent.getId(),
+                dropEvent.getName(),
+                dropEvent.getSlug(),
+                dropEvent.getDescription(),
+                dropEvent.getDropDate(),
+                Boolean.TRUE.equals(dropEvent.getIsActive()),
+                null);
+    }
 }

@@ -79,6 +79,12 @@ public class SecurityConfig {
                                                 .requestMatchers(HttpMethod.POST, "/api/top-products").hasRole("ADMIN")
                                                 .requestMatchers(HttpMethod.PUT, "/api/top-products/*").hasRole("ADMIN")
                                                 .requestMatchers(HttpMethod.DELETE, "/api/top-products/*").hasRole("ADMIN")
+                                                // Drop Events
+                                                .requestMatchers(HttpMethod.GET, "/api/drops/upcoming", "/api/drops/previous", "/api/drops/*").permitAll()
+                                                .requestMatchers(HttpMethod.GET, "/api/drops").hasRole("ADMIN")
+                                                .requestMatchers(HttpMethod.POST, "/api/drops").hasRole("ADMIN")
+                                                .requestMatchers(HttpMethod.PATCH, "/api/drops/*").hasRole("ADMIN")
+                                                .requestMatchers(HttpMethod.DELETE, "/api/drops/*").hasRole("ADMIN")
                                                 // Product Inquiries
                                                 .requestMatchers(HttpMethod.POST, "/api/inquiries").authenticated()
                                                 .requestMatchers(HttpMethod.GET, "/api/inquiries", "/api/inquiries/grouped").hasRole("ADMIN")

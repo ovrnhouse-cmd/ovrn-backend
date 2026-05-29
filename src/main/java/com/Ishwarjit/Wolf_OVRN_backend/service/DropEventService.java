@@ -40,11 +40,17 @@ public class DropEventService {
     }
 
     @Transactional(readOnly = true)
-    public List<DropEventSummaryResponse> getUpcomingDrops() {
-        return dropEventRepository.findUpcomingDrops(OffsetDateTime.now())
-                .stream()
-                .map(DropEventSummaryResponse::from)
-                .collect(Collectors.toList());
+    public DropEventResponse getNextUpcomingDrop() {
+        return dropEventRepository.findFirstByIsActiveTrueAndDropDateAfterOrderByDropDateAsc(OffsetDateTime.now())
+                .map(event -> {
+                    if (OffsetDateTime.now().plusMinutes(5).isAfter(event.getDropDate()) || 
+                        OffsetDateTime.now().plusMinutes(5).isEqual(event.getDropDate())) {
+                        return buildResponse(event);
+                    } else {
+                        return DropEventResponse.fromWithoutProducts(event);
+                    }
+                })
+                .orElse(null);
     }
 
     @Transactional(readOnly = true)
