@@ -46,6 +46,9 @@ public class DropEvent {
     @Column(name = "drop_date", nullable = false)
     private OffsetDateTime dropDate;
 
+    @Column(name = "expires_at", nullable = false)
+    private OffsetDateTime expiresAt;
+
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
 

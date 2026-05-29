@@ -22,6 +22,9 @@ public class CreateDropEventRequest {
     @NotNull
     private OffsetDateTime dropDate;
 
+    @NotNull
+    private OffsetDateTime expiresAt;
+
     private Boolean isActive = true;
     private List<UUID> productIds;
 }

@@ -39,8 +39,13 @@ public class DropEventController {
     }
 
     @GetMapping("/upcoming")
-    public ResponseEntity<ApiResponse<DropEventResponse>> getUpcomingDrop() {
+    public ResponseEntity<ApiResponse<DropEventSummaryResponse>> getUpcomingDrop() {
         return ResponseEntity.ok(ApiResponse.ok(dropEventService.getNextUpcomingDrop()));
+    }
+
+    @GetMapping("/live")
+    public ResponseEntity<ApiResponse<DropEventResponse>> getLiveDrop() {
+        return ResponseEntity.ok(ApiResponse.ok(dropEventService.getLiveDrop()));
     }
 
     @GetMapping("/previous")

@@ -40,16 +40,17 @@ public class DropEventService {
     }
 
     @Transactional(readOnly = true)
-    public DropEventResponse getNextUpcomingDrop() {
-        return dropEventRepository.findFirstByIsActiveTrueAndDropDateAfterOrderByDropDateAsc(OffsetDateTime.now())
-                .map(event -> {
-                    if (OffsetDateTime.now().plusMinutes(5).isAfter(event.getDropDate()) || 
-                        OffsetDateTime.now().plusMinutes(5).isEqual(event.getDropDate())) {
-                        return buildResponse(event);
-                    } else {
-                        return DropEventResponse.fromWithoutProducts(event);
-                    }
-                })
+    public DropEventSummaryResponse getNextUpcomingDrop() {
+        return dropEventRepository.findFirstByIsActiveTrueAndExpiresAtAfterOrderByDropDateAsc(OffsetDateTime.now())
+                .map(DropEventSummaryResponse::from)
+                .orElse(null);
+    }
+
+    @Transactional(readOnly = true)
+    public DropEventResponse getLiveDrop() {
+        OffsetDateTime now = OffsetDateTime.now();
+        return dropEventRepository.findFirstByIsActiveTrueAndDropDateLessThanEqualAndExpiresAtAfterOrderByDropDateDesc(now, now)
+                .map(this::buildResponse)
                 .orElse(null);
     }
 
@@ -82,6 +83,7 @@ public class DropEventService {
         event.setSlug(SlugUtils.generate(request.getName()));
         event.setDescription(request.getDescription());
         event.setDropDate(request.getDropDate());
+        event.setExpiresAt(request.getExpiresAt());
         event.setIsActive(Boolean.TRUE.equals(request.getIsActive()));
 
         if (request.getProductIds() != null && !request.getProductIds().isEmpty()) {
@@ -112,6 +114,9 @@ public class DropEventService {
         }
         if (request.getDropDate() != null) {
             event.setDropDate(request.getDropDate());
+        }
+        if (request.getExpiresAt() != null) {
+            event.setExpiresAt(request.getExpiresAt());
         }
         if (request.getIsActive() != null) {
             event.setIsActive(request.getIsActive());

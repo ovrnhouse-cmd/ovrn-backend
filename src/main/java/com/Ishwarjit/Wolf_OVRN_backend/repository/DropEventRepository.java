@@ -13,8 +13,10 @@ import org.springframework.stereotype.Repository;
 public interface DropEventRepository extends JpaRepository<DropEvent, UUID> {
     Optional<DropEvent> findBySlug(String slug);
 
-    Optional<DropEvent> findFirstByIsActiveTrueAndDropDateAfterOrderByDropDateAsc(OffsetDateTime now);
+    Optional<DropEvent> findFirstByIsActiveTrueAndExpiresAtAfterOrderByDropDateAsc(OffsetDateTime now);
 
-    @Query("SELECT d FROM DropEvent d WHERE d.isActive = true AND d.dropDate <= :now ORDER BY d.dropDate DESC")
+    Optional<DropEvent> findFirstByIsActiveTrueAndDropDateLessThanEqualAndExpiresAtAfterOrderByDropDateDesc(OffsetDateTime now1, OffsetDateTime now2);
+
+    @Query("SELECT d FROM DropEvent d WHERE d.isActive = true AND d.expiresAt <= :now ORDER BY d.dropDate DESC")
     List<DropEvent> findPreviousDrops(OffsetDateTime now);
 }

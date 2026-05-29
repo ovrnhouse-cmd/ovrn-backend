@@ -10,6 +10,7 @@ public record DropEventSummaryResponse(
         String slug,
         String description,
         OffsetDateTime dropDate,
+        OffsetDateTime expiresAt,
         boolean isActive) {
 
     public static DropEventSummaryResponse from(DropEvent dropEvent) {
@@ -19,6 +20,7 @@ public record DropEventSummaryResponse(
                 dropEvent.getSlug(),
                 dropEvent.getDescription(),
                 dropEvent.getDropDate(),
+                dropEvent.getExpiresAt(),
                 Boolean.TRUE.equals(dropEvent.getIsActive()));
     }
 }

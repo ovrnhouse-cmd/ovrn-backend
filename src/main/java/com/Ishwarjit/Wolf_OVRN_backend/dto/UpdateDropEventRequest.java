@@ -16,6 +16,7 @@ public class UpdateDropEventRequest {
     private String slug;
     private String description;
     private OffsetDateTime dropDate;
+    private OffsetDateTime expiresAt;
     private Boolean isActive;
     private List<UUID> productIds;
 }

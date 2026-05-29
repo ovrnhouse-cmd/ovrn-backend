@@ -14,6 +14,7 @@ public record DropEventResponse(
         String slug,
         String description,
         OffsetDateTime dropDate,
+        OffsetDateTime expiresAt,
         boolean isActive,
         List<ProductSummaryResponse> products) {
 
@@ -28,6 +29,7 @@ public record DropEventResponse(
                 dropEvent.getSlug(),
                 dropEvent.getDescription(),
                 dropEvent.getDropDate(),
+                dropEvent.getExpiresAt(),
                 Boolean.TRUE.equals(dropEvent.getIsActive()),
                 productDtos);
     }
@@ -39,6 +41,7 @@ public record DropEventResponse(
                 dropEvent.getSlug(),
                 dropEvent.getDescription(),
                 dropEvent.getDropDate(),
+                dropEvent.getExpiresAt(),
                 Boolean.TRUE.equals(dropEvent.getIsActive()),
                 null);
     }
