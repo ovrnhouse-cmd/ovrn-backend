@@ -16,4 +16,8 @@ public interface ProductImageRepository extends JpaRepository<ProductImage, UUID
     long countByProductId(UUID productId);
 
     void deleteByProductId(UUID productId);
+
+    java.util.Optional<ProductImage> findBySlug(String slug);
+
+    boolean existsBySlug(String slug);
 }

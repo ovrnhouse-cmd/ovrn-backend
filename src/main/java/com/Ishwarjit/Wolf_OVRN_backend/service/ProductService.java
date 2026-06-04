@@ -4,12 +4,13 @@ import com.Ishwarjit.Wolf_OVRN_backend.dto.CreateProductRequest;
 import com.Ishwarjit.Wolf_OVRN_backend.dto.ImageUploadResponse;
 import com.Ishwarjit.Wolf_OVRN_backend.dto.ProductDetailResponse;
 import com.Ishwarjit.Wolf_OVRN_backend.dto.ProductImageRequest;
+import com.Ishwarjit.Wolf_OVRN_backend.dto.ProductImageResponse;
 import com.Ishwarjit.Wolf_OVRN_backend.dto.ProductSummaryResponse;
 import com.Ishwarjit.Wolf_OVRN_backend.dto.UpdateProductRequest;
 import com.Ishwarjit.Wolf_OVRN_backend.entity.Category;
-import java.util.Locale;
 import com.Ishwarjit.Wolf_OVRN_backend.entity.Product;
 import com.Ishwarjit.Wolf_OVRN_backend.entity.ProductImage;
+import com.Ishwarjit.Wolf_OVRN_backend.entity.SizeChart;
 import com.Ishwarjit.Wolf_OVRN_backend.exception.ResourceNotFoundException;
 import com.Ishwarjit.Wolf_OVRN_backend.repository.CategoryRepository;
 import com.Ishwarjit.Wolf_OVRN_backend.repository.ProductImageRepository;
@@ -22,8 +23,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,21 +36,30 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
     private final ProductImageRepository productImageRepository;
+    private final SizeChartService sizeChartService;
     private final CloudinaryService cloudinaryService;
 
     public ProductService(
             ProductRepository productRepository,
             CategoryRepository categoryRepository,
             ProductImageRepository productImageRepository,
+            SizeChartService sizeChartService,
             CloudinaryService cloudinaryService) {
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
         this.productImageRepository = productImageRepository;
+        this.sizeChartService = sizeChartService;
         this.cloudinaryService = cloudinaryService;
     }
 
+    // -------------------------------------------------------------------------
+    // Queries
+    // -------------------------------------------------------------------------
+
     @Transactional(readOnly = true)
-    public Page<ProductSummaryResponse> list(String search, String categorySlug, Boolean isPremium, java.math.BigDecimal minPrice, java.math.BigDecimal maxPrice, Pageable pageable) {
+    public Page<ProductSummaryResponse> list(
+            String search, String categorySlug, Boolean isPremium,
+            java.math.BigDecimal minPrice, java.math.BigDecimal maxPrice, Pageable pageable) {
         Specification<Product> spec = buildSpecification(search, categorySlug, isPremium, minPrice, maxPrice);
         return productRepository.findAll(spec, pageable).map(product -> {
             List<ProductImage> images = productImageRepository
@@ -78,10 +88,8 @@ public class ProductService {
 
     @Transactional(readOnly = true)
     public List<ProductSummaryResponse> getRelatedProducts(UUID productId) {
-        // Fetch 4 related products by category
         Pageable limit = PageRequest.of(0, 4);
         Page<Product> relatedPage = productRepository.findRelatedProducts(productId, limit);
-        
         return relatedPage.map(product -> {
             List<ProductImage> images = productImageRepository
                     .findByProductIdOrderByDisplayOrderAsc(product.getId());
@@ -89,15 +97,15 @@ public class ProductService {
         }).toList();
     }
 
+    // -------------------------------------------------------------------------
+    // Create
+    // -------------------------------------------------------------------------
+
     @Transactional
     public ProductDetailResponse create(CreateProductRequest request) {
         Product product = new Product();
         product.setName(request.getName());
-
-        // Generate slug from name
-        String slug = SlugUtils.generate(request.getName());
-        product.setSlug(slug);
-
+        product.setSlug(SlugUtils.generate(request.getName()));
         product.setDescription(request.getDescription());
         product.setSellingPrice(request.getSellingPrice());
         product.setMarkedPrice(request.getMarkedPrice());
@@ -109,17 +117,7 @@ public class ProductService {
             product.setAvailableSizes(request.getSizes());
         }
 
-        if (request.getSellingPrice().compareTo(java.math.BigDecimal.ZERO) < 0) {
-            throw new IllegalArgumentException("Selling price cannot be less than 0.");
-        }
-        if (request.getMarkedPrice() != null) {
-            if (request.getMarkedPrice().compareTo(java.math.BigDecimal.ZERO) < 0) {
-                throw new IllegalArgumentException("Marked price cannot be less than 0.");
-            }
-            if (request.getMarkedPrice().compareTo(request.getSellingPrice()) <= 0) {
-                throw new IllegalArgumentException("Marked price must be strictly greater than selling price.");
-            }
-        }
+        validatePrices(request.getSellingPrice(), request.getMarkedPrice());
 
         if (request.getCategoryIds() != null && !request.getCategoryIds().isEmpty()) {
             List<Category> categories = categoryRepository.findAllById(request.getCategoryIds());
@@ -129,18 +127,18 @@ public class ProductService {
             product.setCategories(categories);
         }
 
+        // Link global size chart if provided
+        if (request.getSizeChartId() != null) {
+            SizeChart chart = sizeChartService.getEntityOrThrow(request.getSizeChartId());
+            product.setSizeChart(chart);
+        }
+
         Product saved = productRepository.save(product);
 
-        // Save images if provided
         List<ProductImage> savedImages = new ArrayList<>();
         if (request.getImages() != null && !request.getImages().isEmpty()) {
             for (ProductImageRequest imgReq : request.getImages()) {
-                ProductImage image = new ProductImage();
-                image.setProduct(saved);
-                image.setUrl(imgReq.getUrl());
-                image.setAltText(imgReq.getAltText() != null ? imgReq.getAltText() : saved.getName());
-                image.setIsPrimary(Boolean.TRUE.equals(imgReq.getIsPrimary()));
-                image.setDisplayOrder(imgReq.getDisplayOrder() != null ? imgReq.getDisplayOrder() : 0);
+                ProductImage image = buildImageEntity(saved, imgReq);
                 savedImages.add(productImageRepository.save(image));
             }
         }
@@ -148,53 +146,29 @@ public class ProductService {
         return ProductDetailResponse.from(saved, savedImages);
     }
 
+    // -------------------------------------------------------------------------
+    // Update
+    // -------------------------------------------------------------------------
+
     @Transactional
     public ProductDetailResponse update(UUID id, UpdateProductRequest request) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found: " + id));
 
-        if (request.getName() != null) {
-            product.setName(request.getName());
-        }
-        if (request.getSlug() != null) {
-            product.setSlug(SlugUtils.generate(request.getSlug()));
-        }
-        if (request.getDescription() != null) {
-            product.setDescription(request.getDescription());
-        }
-        if (request.getSellingPrice() != null) {
-            product.setSellingPrice(request.getSellingPrice());
-        }
-        if (request.getMarkedPrice() != null) {
-            product.setMarkedPrice(request.getMarkedPrice());
-        }
-        if (request.getInStock() != null) {
-            product.setInStock(request.getInStock());
-        }
-        if (request.getIsActive() != null) {
-            product.setIsActive(request.getIsActive());
-        }
-        if (request.getIsPremium() != null) {
-            product.setIsPremium(request.getIsPremium());
-        }
-        if (request.getSizes() != null) {
-            product.setAvailableSizes(request.getSizes());
-        }
+        if (request.getName() != null)        product.setName(request.getName());
+        if (request.getSlug() != null)        product.setSlug(SlugUtils.generate(request.getSlug()));
+        if (request.getDescription() != null) product.setDescription(request.getDescription());
+        if (request.getSellingPrice() != null) product.setSellingPrice(request.getSellingPrice());
+        if (request.getMarkedPrice() != null)  product.setMarkedPrice(request.getMarkedPrice());
+        if (request.getInStock() != null)      product.setInStock(request.getInStock());
+        if (request.getIsActive() != null)     product.setIsActive(request.getIsActive());
+        if (request.getIsPremium() != null)    product.setIsPremium(request.getIsPremium());
+        if (request.getSizes() != null)        product.setAvailableSizes(request.getSizes());
 
-        java.math.BigDecimal currentSellingPrice = request.getSellingPrice() != null ? request.getSellingPrice() : product.getSellingPrice();
-        java.math.BigDecimal currentMarkedPrice = request.getMarkedPrice() != null ? request.getMarkedPrice() : product.getMarkedPrice();
+        validatePrices(
+                request.getSellingPrice() != null ? request.getSellingPrice() : product.getSellingPrice(),
+                request.getMarkedPrice()  != null ? request.getMarkedPrice()  : product.getMarkedPrice());
 
-        if (currentSellingPrice != null && currentSellingPrice.compareTo(java.math.BigDecimal.ZERO) < 0) {
-            throw new IllegalArgumentException("Selling price cannot be less than 0.");
-        }
-        if (currentMarkedPrice != null) {
-            if (currentMarkedPrice.compareTo(java.math.BigDecimal.ZERO) < 0) {
-                throw new IllegalArgumentException("Marked price cannot be less than 0.");
-            }
-            if (currentSellingPrice != null && currentMarkedPrice.compareTo(currentSellingPrice) <= 0) {
-                throw new IllegalArgumentException("Marked price must be strictly greater than selling price.");
-            }
-        }
         if (request.getCategoryIds() != null) {
             List<Category> categories = categoryRepository.findAllById(request.getCategoryIds());
             if (categories.size() != request.getCategoryIds().size()) {
@@ -203,18 +177,20 @@ public class ProductService {
             product.setCategories(categories);
         }
 
+        // Size chart link: set, clear, or leave unchanged
+        if (Boolean.TRUE.equals(request.getClearSizeChart())) {
+            product.setSizeChart(null);
+        } else if (request.getSizeChartId() != null) {
+            SizeChart chart = sizeChartService.getEntityOrThrow(request.getSizeChartId());
+            product.setSizeChart(chart);
+        }
+
         Product saved = productRepository.save(product);
 
         if (request.getImages() != null) {
             productImageRepository.deleteByProductId(saved.getId());
             for (ProductImageRequest imgReq : request.getImages()) {
-                ProductImage image = new ProductImage();
-                image.setProduct(saved);
-                image.setUrl(imgReq.getUrl());
-                image.setAltText(imgReq.getAltText() != null ? imgReq.getAltText() : saved.getName());
-                image.setIsPrimary(Boolean.TRUE.equals(imgReq.getIsPrimary()));
-                image.setDisplayOrder(imgReq.getDisplayOrder() != null ? imgReq.getDisplayOrder() : 0);
-                productImageRepository.save(image);
+                productImageRepository.save(buildImageEntity(saved, imgReq));
             }
         }
 
@@ -222,6 +198,10 @@ public class ProductService {
                 .findByProductIdOrderByDisplayOrderAsc(saved.getId());
         return ProductDetailResponse.from(saved, images);
     }
+
+    // -------------------------------------------------------------------------
+    // Delete product
+    // -------------------------------------------------------------------------
 
     @Transactional
     public void delete(UUID id) {
@@ -231,6 +211,10 @@ public class ProductService {
         productRepository.deleteById(id);
     }
 
+    // -------------------------------------------------------------------------
+    // Image management
+    // -------------------------------------------------------------------------
+
     @Transactional
     public ImageUploadResponse addImage(UUID productId, MultipartFile file) throws IOException {
         Product product = productRepository.findById(productId)
@@ -239,43 +223,118 @@ public class ProductService {
         String secureUrl = cloudinaryService.upload(file);
         long existingCount = productImageRepository.countByProductId(productId);
 
+        String originalName = file.getOriginalFilename();
+        String imageName = originalName != null ? originalName : "product-image";
+        String slug = buildUniqueImageSlug(SlugUtils.generate(stripExtension(imageName)));
+
         ProductImage image = new ProductImage();
         image.setProduct(product);
         image.setUrl(secureUrl);
+        image.setImageName(imageName);
+        image.setSlug(slug);
         image.setAltText(product.getName());
         image.setIsPrimary(existingCount == 0);
         image.setDisplayOrder((int) existingCount);
 
-        ProductImage saved = productImageRepository.save(image);
-        return ImageUploadResponse.from(saved);
+        return ImageUploadResponse.from(productImageRepository.save(image));
     }
 
-    private Specification<Product> buildSpecification(String search, String categorySlug, Boolean isPremium, java.math.BigDecimal minPrice, java.math.BigDecimal maxPrice) {
+    @Transactional
+    public void deleteImage(UUID imageId) {
+        if (!productImageRepository.existsById(imageId)) {
+            throw new ResourceNotFoundException("Product image not found: " + imageId);
+        }
+        productImageRepository.deleteById(imageId);
+    }
+
+    @Transactional
+    public ProductImageResponse updateImage(UUID imageId, UpdateImageRequest request) {
+        ProductImage image = productImageRepository.findById(imageId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product image not found: " + imageId));
+        if (request.getAltText() != null)     image.setAltText(request.getAltText());
+        if (request.getIsPrimary() != null)   image.setIsPrimary(request.getIsPrimary());
+        if (request.getDisplayOrder() != null) image.setDisplayOrder(request.getDisplayOrder());
+        return ProductImageResponse.from(productImageRepository.save(image));
+    }
+
+    // -------------------------------------------------------------------------
+    // Inner DTO for updateImage
+    // -------------------------------------------------------------------------
+
+    @lombok.Getter
+    @lombok.Setter
+    public static class UpdateImageRequest {
+        private String altText;
+        private Boolean isPrimary;
+        private Integer displayOrder;
+    }
+
+    // -------------------------------------------------------------------------
+    // Helpers
+    // -------------------------------------------------------------------------
+
+    private static void validatePrices(java.math.BigDecimal selling, java.math.BigDecimal marked) {
+        if (selling != null && selling.compareTo(java.math.BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Selling price cannot be less than 0.");
+        }
+        if (marked != null) {
+            if (marked.compareTo(java.math.BigDecimal.ZERO) < 0) {
+                throw new IllegalArgumentException("Marked price cannot be less than 0.");
+            }
+            if (selling != null && marked.compareTo(selling) <= 0) {
+                throw new IllegalArgumentException("Marked price must be strictly greater than selling price.");
+            }
+        }
+    }
+
+    private ProductImage buildImageEntity(Product product, ProductImageRequest req) {
+        ProductImage img = new ProductImage();
+        img.setProduct(product);
+        img.setUrl(req.getUrl());
+        img.setAltText(req.getAltText() != null ? req.getAltText() : product.getName());
+        img.setIsPrimary(Boolean.TRUE.equals(req.getIsPrimary()));
+        img.setDisplayOrder(req.getDisplayOrder() != null ? req.getDisplayOrder() : 0);
+        return img;
+    }
+
+    private static String stripExtension(String filename) {
+        int idx = filename.lastIndexOf('.');
+        return idx > 0 ? filename.substring(0, idx) : filename;
+    }
+
+    private String buildUniqueImageSlug(String base) {
+        String candidate = base;
+        for (int i = 0; i < 5; i++) {
+            if (!productImageRepository.existsBySlug(candidate)) {
+                return candidate;
+            }
+            candidate = base + "-" + UUID.randomUUID().toString().substring(0, 8);
+        }
+        return base + "-" + UUID.randomUUID();
+    }
+
+    private Specification<Product> buildSpecification(
+            String search, String categorySlug, Boolean isPremium,
+            java.math.BigDecimal minPrice, java.math.BigDecimal maxPrice) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
             if (search != null && !search.isBlank()) {
                 String[] terms = search.toLowerCase().trim().split("\\s+");
                 Predicate[] termPredicates = new Predicate[terms.length];
                 for (int i = 0; i < terms.length; i++) {
-                    Predicate nameMatch = cb.like(cb.lower(root.get("name")), "%" + terms[i] + "%");
-                    Predicate descMatch = cb.like(cb.lower(root.get("description")), "%" + terms[i] + "%");
-                    termPredicates[i] = cb.or(nameMatch, descMatch);
+                    termPredicates[i] = cb.or(
+                            cb.like(cb.lower(root.get("name")), "%" + terms[i] + "%"),
+                            cb.like(cb.lower(root.get("description")), "%" + terms[i] + "%"));
                 }
                 predicates.add(cb.or(termPredicates));
             }
             if (categorySlug != null && !categorySlug.isBlank()) {
-                Join<Product, Category> categoryJoin = root.join("categories");
-                predicates.add(cb.equal(categoryJoin.get("slug"), categorySlug));
+                Join<Product, Category> join = root.join("categories");
+                predicates.add(cb.equal(join.get("slug"), categorySlug));
             }
-            if (isPremium != null) {
-                predicates.add(cb.equal(root.get("isPremium"), isPremium));
-            }
-            if (minPrice != null) {
-                predicates.add(cb.greaterThanOrEqualTo(root.get("sellingPrice"), minPrice));
-            }
-            if (maxPrice != null) {
-                predicates.add(cb.lessThanOrEqualTo(root.get("sellingPrice"), maxPrice));
-            }
+            if (isPremium != null) predicates.add(cb.equal(root.get("isPremium"), isPremium));
+            if (minPrice != null)  predicates.add(cb.greaterThanOrEqualTo(root.get("sellingPrice"), minPrice));
+            if (maxPrice != null)  predicates.add(cb.lessThanOrEqualTo(root.get("sellingPrice"), maxPrice));
             return predicates.isEmpty() ? null : cb.and(predicates.toArray(new Predicate[0]));
         };
     }

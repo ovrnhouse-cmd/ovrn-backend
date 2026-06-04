@@ -7,6 +7,8 @@ public record ImageUploadResponse(
         UUID id,
         UUID productId,
         String url,
+        String imageName,
+        String slug,
         boolean isPrimary,
         int displayOrder) {
 
@@ -15,6 +17,8 @@ public record ImageUploadResponse(
                 image.getId(),
                 image.getProduct().getId(),
                 image.getUrl(),
+                image.getImageName(),
+                image.getSlug(),
                 Boolean.TRUE.equals(image.getIsPrimary()),
                 image.getDisplayOrder() != null ? image.getDisplayOrder() : 0);
     }

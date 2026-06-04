@@ -18,11 +18,15 @@ public class CloudinaryService {
     }
 
     public String upload(MultipartFile file) throws IOException {
+        return upload(file, "wolf-ovrn/products");
+    }
+
+    public String upload(MultipartFile file, String folder) throws IOException {
         if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("File must not be empty");
         }
         Map<String, Object> options = ObjectUtils.asMap(
-                "folder", "wolf-ovrn/products",
+                "folder", folder,
                 "resource_type", "image");
         @SuppressWarnings("unchecked")
         Map<String, Object> result = cloudinary.uploader().upload(file.getBytes(), options);

@@ -75,6 +75,11 @@ public class Product {
     @OrderBy("displayOrder ASC")
     private List<ProductImage> images = new ArrayList<>();
 
+    /** Optional link to a global size chart. Nullable — not every product has one. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "size_chart_id")
+    private SizeChart sizeChart;
+
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "available_sizes", columnDefinition = "jsonb")
     private List<String> availableSizes = new ArrayList<>();

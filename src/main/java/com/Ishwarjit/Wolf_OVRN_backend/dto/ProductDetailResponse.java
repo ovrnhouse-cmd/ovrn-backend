@@ -18,7 +18,8 @@ public record ProductDetailResponse(
         boolean isPremium,
         List<CategoryResponse> categories,
         List<ProductImageResponse> images,
-        List<String> sizes) {
+        List<String> sizes,
+        SizeChartResponse sizeChart) {
 
     public static ProductDetailResponse from(Product product, List<ProductImage> images) {
         List<CategoryResponse> categories = product.getCategories().stream()
@@ -27,6 +28,9 @@ public record ProductDetailResponse(
         List<ProductImageResponse> imageDtos = images.stream()
                 .map(ProductImageResponse::from)
                 .toList();
+        SizeChartResponse sizeChart = product.getSizeChart() != null
+                ? SizeChartResponse.from(product.getSizeChart())
+                : null;
         return new ProductDetailResponse(
                 product.getId(),
                 product.getName(),
@@ -39,6 +43,7 @@ public record ProductDetailResponse(
                 Boolean.TRUE.equals(product.getIsPremium()),
                 categories,
                 imageDtos,
-                product.getAvailableSizes());
+                product.getAvailableSizes(),
+                sizeChart);
     }
 }

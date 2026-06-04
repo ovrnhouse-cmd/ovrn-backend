@@ -61,6 +61,14 @@ public class SecurityConfig {
                                                 .requestMatchers(HttpMethod.DELETE, "/api/products/*").hasRole("ADMIN")
                                                 .requestMatchers(HttpMethod.POST, "/api/products/*/images")
                                                 .hasRole("ADMIN")
+                                                // Product image management (individual image)
+                                                .requestMatchers(HttpMethod.DELETE, "/api/products/images/*").hasRole("ADMIN")
+                                                .requestMatchers(HttpMethod.PATCH, "/api/products/images/*").hasRole("ADMIN")
+                                                // Size charts — global, public read, admin write
+                                                .requestMatchers(HttpMethod.GET, "/api/size-charts", "/api/size-charts/*").permitAll()
+                                                .requestMatchers(HttpMethod.POST, "/api/size-charts").hasRole("ADMIN")
+                                                .requestMatchers(HttpMethod.PATCH, "/api/size-charts/*").hasRole("ADMIN")
+                                                .requestMatchers(HttpMethod.DELETE, "/api/size-charts/*").hasRole("ADMIN")
                                                 .requestMatchers(HttpMethod.GET, "/api/faqs", "/api/faqs/**").permitAll()
                                                 .requestMatchers(HttpMethod.POST, "/api/faqs").hasRole("ADMIN")
                                                 .requestMatchers(HttpMethod.PUT, "/api/faqs/*").hasRole("ADMIN")
@@ -105,10 +113,21 @@ public class SecurityConfig {
                                 .exceptionHandling(exceptions -> exceptions
                                                 .authenticationEntryPoint((request, response, authException) -> {
                                                         if (request.getRequestURI().startsWith("/api/")) {
-                                                                writeJsonError(response,
-                                                                                HttpServletResponse.SC_UNAUTHORIZED,
-                                                                                "Unauthorized",
-                                                                                "Authentication required");
+                                                                boolean expired = Boolean.TRUE.equals(
+                                                                                request.getAttribute(JwtAuthenticationFilter.ATTR_TOKEN_EXPIRED));
+                                                                if (expired) {
+                                                                        writeJsonError(response,
+                                                                                        HttpServletResponse.SC_UNAUTHORIZED,
+                                                                                        "Unauthorized",
+                                                                                        "Access token expired",
+                                                                                        "TOKEN_EXPIRED");
+                                                                } else {
+                                                                        writeJsonError(response,
+                                                                                        HttpServletResponse.SC_UNAUTHORIZED,
+                                                                                        "Unauthorized",
+                                                                                        "Authentication required",
+                                                                                        null);
+                                                                }
                                                         } else {
                                                                 response.sendRedirect("/oauth2/authorization/google");
                                                         }
@@ -127,17 +146,26 @@ public class SecurityConfig {
 
         private static void writeJsonError(
                         HttpServletResponse response, int status, String error, String message) throws java.io.IOException {
+                writeJsonError(response, status, error, message, null);
+        }
+
+        private static void writeJsonError(
+                        HttpServletResponse response, int status, String error, String message, String code) throws java.io.IOException {
                 response.setStatus(status);
                 response.setContentType(MediaType.APPLICATION_JSON_VALUE);
                 response.setCharacterEncoding("UTF-8");
-                String body = "{"
-                                + "\"success\":false,"
-                                + "\"timestamp\":\"" + OffsetDateTime.now() + "\","
-                                + "\"status\":" + status + ","
-                                + "\"error\":\"" + escapeJson(error) + "\","
-                                + "\"message\":\"" + escapeJson(message) + "\""
-                                + "}";
-                response.getWriter().write(body);
+                StringBuilder body = new StringBuilder();
+                body.append("{");
+                body.append("\"success\":false,");
+                body.append("\"timestamp\":\"").append(OffsetDateTime.now()).append("\",");
+                body.append("\"status\":").append(status).append(",");
+                body.append("\"error\":\"").append(escapeJson(error)).append("\",");
+                body.append("\"message\":\"").append(escapeJson(message)).append("\"");
+                if (code != null) {
+                        body.append(",\"code\":\"").append(escapeJson(code)).append("\"");
+                }
+                body.append("}");
+                response.getWriter().write(body.toString());
         }
 
         private static String escapeJson(String value) {

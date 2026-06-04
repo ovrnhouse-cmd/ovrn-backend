@@ -37,6 +37,14 @@ public class ProductImage {
     @Column(name = "url", nullable = false, length = 2048)
     private String url;
 
+    /** Original filename of the uploaded image (e.g. "wolf-hoodie-black.jpg"). */
+    @Column(name = "image_name", length = 255)
+    private String imageName;
+
+    /** URL-friendly slug derived from image_name via SlugUtils (e.g. "wolf-hoodie-black"). */
+    @Column(name = "slug", unique = true, length = 255)
+    private String slug;
+
     @Column(name = "alt_text")
     private String altText;
 

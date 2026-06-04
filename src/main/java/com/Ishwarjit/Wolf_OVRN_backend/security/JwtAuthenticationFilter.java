@@ -2,6 +2,7 @@ package com.Ishwarjit.Wolf_OVRN_backend.security;
 
 import com.Ishwarjit.Wolf_OVRN_backend.service.JwtService;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -22,6 +23,11 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     public static final String COOKIE_NAME = "auth_token";
+
+    /** Request attribute set when the access token is present but expired.
+     *  The security entry point reads this to include {@code "code":"TOKEN_EXPIRED"}
+     *  in the 401 body so the frontend can trigger a silent refresh. */
+    public static final String ATTR_TOKEN_EXPIRED = "tokenExpired";
 
     private final JwtService jwtService;
     private final boolean cookieSecure;
@@ -63,18 +69,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         new UsernamePasswordAuthenticationToken(userId, null, authorities);
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authentication);
-            } catch (JwtException | IllegalArgumentException ex) {
+            } catch (ExpiredJwtException ex) {
+                // Token is structurally valid but past its expiry.
+                // Signal to the entry point so it can return TOKEN_EXPIRED code.
                 SecurityContextHolder.clearContext();
-                Cookie cookie = new Cookie(COOKIE_NAME, "");
-                cookie.setHttpOnly(true);
-                cookie.setSecure(cookieSecure);
-                cookie.setPath("/");
-                if (cookieDomain != null && !cookieDomain.isBlank()) {
-                    cookie.setDomain(cookieDomain);
-                }
-                cookie.setMaxAge(0);
-                cookie.setAttribute("SameSite", "Lax");
-                response.addCookie(cookie);
+                clearAuthCookie(response);
+                request.setAttribute(ATTR_TOKEN_EXPIRED, true);
+            } catch (JwtException | IllegalArgumentException ex) {
+                // Token is malformed or has an invalid signature — treat as no token.
+                SecurityContextHolder.clearContext();
+                clearAuthCookie(response);
             }
         }
 
@@ -92,5 +96,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
         }
         return null;
+    }
+
+    private void clearAuthCookie(HttpServletResponse response) {
+        Cookie cookie = new Cookie(COOKIE_NAME, "");
+        cookie.setHttpOnly(true);
+        cookie.setSecure(cookieSecure);
+        cookie.setPath("/");
+        if (cookieDomain != null && !cookieDomain.isBlank()) {
+            cookie.setDomain(cookieDomain);
+        }
+        cookie.setMaxAge(0);
+        cookie.setAttribute("SameSite", "Lax");
+        response.addCookie(cookie);
     }
 }

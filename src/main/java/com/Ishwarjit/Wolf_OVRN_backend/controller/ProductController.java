@@ -4,9 +4,11 @@ import com.Ishwarjit.Wolf_OVRN_backend.dto.ApiResponse;
 import com.Ishwarjit.Wolf_OVRN_backend.dto.CreateProductRequest;
 import com.Ishwarjit.Wolf_OVRN_backend.dto.ImageUploadResponse;
 import com.Ishwarjit.Wolf_OVRN_backend.dto.ProductDetailResponse;
+import com.Ishwarjit.Wolf_OVRN_backend.dto.ProductImageResponse;
 import com.Ishwarjit.Wolf_OVRN_backend.dto.ProductSummaryResponse;
 import com.Ishwarjit.Wolf_OVRN_backend.dto.UpdateProductRequest;
 import com.Ishwarjit.Wolf_OVRN_backend.service.ProductService;
+import com.Ishwarjit.Wolf_OVRN_backend.service.ProductService.UpdateImageRequest;
 import jakarta.validation.Valid;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -192,6 +194,21 @@ public class ProductController {
             @RequestPart("file") MultipartFile file) throws IOException {
         ImageUploadResponse response = productService.addImage(id, file);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.created(response));
+    }
+
+    /** [ADMIN] Delete a single product image by its UUID. */
+    @DeleteMapping("/images/{imageId}")
+    public ResponseEntity<ApiResponse<Void>> deleteImage(@PathVariable UUID imageId) {
+        productService.deleteImage(imageId);
+        return ResponseEntity.ok(ApiResponse.ok(null, "Image deleted successfully"));
+    }
+
+    /** [ADMIN] Update metadata of a single product image (altText, isPrimary, displayOrder). */
+    @PatchMapping(value = "/images/{imageId}", consumes = "application/json")
+    public ResponseEntity<ApiResponse<ProductImageResponse>> updateImage(
+            @PathVariable UUID imageId,
+            @RequestBody UpdateImageRequest request) {
+        return ResponseEntity.ok(ApiResponse.ok(productService.updateImage(imageId, request), "Image updated successfully"));
     }
 
     private void validateImage(MultipartFile file) {
