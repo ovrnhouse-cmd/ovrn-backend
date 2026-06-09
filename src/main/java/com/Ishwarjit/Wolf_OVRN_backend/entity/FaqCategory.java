@@ -2,7 +2,7 @@ package com.Ishwarjit.Wolf_OVRN_backend.entity;
 
 public enum FaqCategory {
     SHIPPING,
-    RETURN,
+    EXCHANGE,
     ORDER_TRACKING,
     SIZING,
     ORDERS,

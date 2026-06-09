@@ -18,7 +18,8 @@ public record ProductSummaryResponse(
         boolean isPremium,
         String primaryImageUrl,
         List<String> availableSizes,
-        List<CategoryResponse> categories) {
+        List<CategoryResponse> categories,
+        String description) {
 
     public static ProductSummaryResponse from(Product product, String primaryImageUrl) {
         List<CategoryResponse> categoryResponses = product.getCategories() == null ? List.of() : 
@@ -35,7 +36,8 @@ public record ProductSummaryResponse(
                 Boolean.TRUE.equals(product.getIsPremium()),
                 primaryImageUrl,
                 product.getAvailableSizes() == null ? List.of() : product.getAvailableSizes(),
-                categoryResponses);
+                categoryResponses,
+                product.getDescription());
     }
 
     public static ProductSummaryResponse from(Product product, List<ProductImage> images) {
