@@ -50,15 +50,42 @@ public class ProductController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int limit,
             @RequestParam(required = false) String search,
-            @RequestParam(required = false) List<UUID> categoryIds,
-            @RequestParam(required = false) List<UUID> sizeIds,
-            @RequestParam(required = false) List<UUID> colorIds,
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String categoryIds,
+            @RequestParam(required = false) String sizes,
+            @RequestParam(required = false) String sizeIds,
+            @RequestParam(required = false) String colors,
+            @RequestParam(required = false) String colorIds,
             @RequestParam(required = false) Boolean isPremium,
             @RequestParam(required = false) java.math.BigDecimal minPrice,
             @RequestParam(required = false) java.math.BigDecimal maxPrice,
             @RequestParam(required = false) String sort) {
+        
         Pageable pageable = PageRequest.of(Math.max(page, 0), Math.max(limit, 1), parseSort(sort));
-        return ResponseEntity.ok(ApiResponse.ok(productService.list(search, categoryIds, sizeIds, colorIds, isPremium, minPrice, maxPrice, pageable)));
+        
+        String effectiveSearch = search != null ? search : q;
+        List<String> parsedCategories = parseStringList(categoryIds != null ? categoryIds : category);
+        List<String> parsedSizes = parseStringList(sizeIds != null ? sizeIds : sizes);
+        List<String> parsedColors = parseStringList(colorIds != null ? colorIds : colors);
+        
+        return ResponseEntity.ok(ApiResponse.ok(productService.list(
+                effectiveSearch, parsedCategories, parsedSizes, parsedColors, isPremium, minPrice, maxPrice, pageable)));
+    }
+
+    private List<String> parseStringList(String param) {
+        if (param == null || param.isBlank()) {
+            return null;
+        }
+        String[] parts = param.split(",");
+        List<String> list = new ArrayList<>();
+        for (String p : parts) {
+            String trimmed = p.trim();
+            if (!trimmed.isEmpty()) {
+                list.add(trimmed);
+            }
+        }
+        return list.isEmpty() ? null : list;
     }
 
     @GetMapping("/{slug}")

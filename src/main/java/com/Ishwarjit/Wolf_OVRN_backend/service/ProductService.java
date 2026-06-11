@@ -68,9 +68,9 @@ public class ProductService {
 
     @Transactional(readOnly = true)
     public Page<ProductSummaryResponse> list(
-            String search, List<UUID> categoryIds, List<UUID> sizeIds, List<UUID> colorIds, Boolean isPremium,
+            String search, List<String> categories, List<String> sizes, List<String> colors, Boolean isPremium,
             java.math.BigDecimal minPrice, java.math.BigDecimal maxPrice, Pageable pageable) {
-        Specification<Product> spec = buildSpecification(search, categoryIds, sizeIds, colorIds, isPremium, minPrice, maxPrice);
+        Specification<Product> spec = buildSpecification(search, categories, sizes, colors, isPremium, minPrice, maxPrice);
         return productRepository.findAll(spec, pageable).map(product -> {
             List<ProductImage> images = productImageRepository
                     .findByProductIdOrderByDisplayOrderAsc(product.getId());
@@ -351,7 +351,7 @@ public class ProductService {
     }
 
     private Specification<Product> buildSpecification(
-            String search, List<UUID> categoryIds, List<UUID> sizeIds, List<UUID> colorIds, Boolean isPremium,
+            String search, List<String> categories, List<String> sizes, List<String> colors, Boolean isPremium,
             java.math.BigDecimal minPrice, java.math.BigDecimal maxPrice) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
@@ -365,21 +365,51 @@ public class ProductService {
                 }
                 predicates.add(cb.or(termPredicates));
             }
-            if (categoryIds != null && !categoryIds.isEmpty()) {
+            if (categories != null && !categories.isEmpty()) {
                 Join<Product, Category> join = root.join("categories");
-                predicates.add(join.get("id").in(categoryIds));
+                List<Predicate> catPredicates = new ArrayList<>();
+                for (String cat : categories) {
+                    try {
+                        UUID id = UUID.fromString(cat);
+                        catPredicates.add(cb.equal(join.get("id"), id));
+                    } catch (IllegalArgumentException e) {
+                        catPredicates.add(cb.equal(join.get("slug"), cat));
+                    }
+                }
+                predicates.add(cb.or(catPredicates.toArray(new Predicate[0])));
             }
-            if (sizeIds != null && !sizeIds.isEmpty()) {
+            if (sizes != null && !sizes.isEmpty()) {
                 Join<Product, Size> join = root.join("sizes");
-                predicates.add(join.get("id").in(sizeIds));
+                List<Predicate> sizePredicates = new ArrayList<>();
+                for (String size : sizes) {
+                    try {
+                        UUID id = UUID.fromString(size);
+                        sizePredicates.add(cb.equal(join.get("id"), id));
+                    } catch (IllegalArgumentException e) {
+                        sizePredicates.add(cb.equal(cb.lower(join.get("sizeName")), size.toLowerCase()));
+                    }
+                }
+                predicates.add(cb.or(sizePredicates.toArray(new Predicate[0])));
             }
-            if (colorIds != null && !colorIds.isEmpty()) {
+            if (colors != null && !colors.isEmpty()) {
                 Join<Product, Color> join = root.join("colors");
-                predicates.add(join.get("id").in(colorIds));
+                List<Predicate> colorPredicates = new ArrayList<>();
+                for (String color : colors) {
+                    try {
+                        UUID id = UUID.fromString(color);
+                        colorPredicates.add(cb.equal(join.get("id"), id));
+                    } catch (IllegalArgumentException e) {
+                        colorPredicates.add(cb.equal(cb.lower(join.get("colorName")), color.toLowerCase()));
+                    }
+                }
+                predicates.add(cb.or(colorPredicates.toArray(new Predicate[0])));
             }
             if (isPremium != null) predicates.add(cb.equal(root.get("isPremium"), isPremium));
             if (minPrice != null)  predicates.add(cb.greaterThanOrEqualTo(root.get("sellingPrice"), minPrice));
             if (maxPrice != null)  predicates.add(cb.lessThanOrEqualTo(root.get("sellingPrice"), maxPrice));
+            
+            query.distinct(true);
+            
             return predicates.isEmpty() ? null : cb.and(predicates.toArray(new Predicate[0]));
         };
     }
