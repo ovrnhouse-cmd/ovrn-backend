@@ -102,8 +102,64 @@ public class ProductService {
 
     @Transactional(readOnly = true)
     public List<ProductSummaryResponse> getRelatedProducts(UUID productId) {
+        Product target = productRepository.findById(productId).orElse(null);
+        if (target == null) {
+            return List.of();
+        }
+
         Pageable limit = PageRequest.of(0, 4);
-        Page<Product> relatedPage = productRepository.findRelatedProducts(productId, limit);
+        
+        Specification<Product> relatedSpec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            predicates.add(cb.notEqual(root.get("id"), productId));
+            predicates.add(cb.equal(root.get("isActive"), true));
+            predicates.add(cb.equal(root.get("inStock"), true));
+            
+            List<Predicate> orPredicates = new ArrayList<>();
+            
+            // 1. Same Fit
+            if (target.getFit() != null) {
+                orPredicates.add(cb.equal(root.get("fit"), target.getFit()));
+            }
+            
+            // 2. Same Categories
+            if (target.getCategories() != null && !target.getCategories().isEmpty()) {
+                Join<Object, Object> categoryJoin = root.join("categories");
+                List<UUID> catIds = target.getCategories().stream().map(com.Ishwarjit.Wolf_OVRN_backend.entity.Category::getId).toList();
+                orPredicates.add(categoryJoin.get("id").in(catIds));
+            }
+            
+            // 3. Similar Name (match first word of name)
+            if (target.getName() != null) {
+                String[] words = target.getName().split("\\s+");
+                if (words.length > 0 && words[0].length() > 2) {
+                    orPredicates.add(cb.like(cb.lower(root.get("name")), "%" + words[0].toLowerCase() + "%"));
+                }
+            }
+            
+            if (!orPredicates.isEmpty()) {
+                predicates.add(cb.or(orPredicates.toArray(new Predicate[0])));
+            }
+            
+            query.distinct(true);
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+
+        Page<Product> relatedPage = productRepository.findAll(relatedSpec, limit);
+        
+        // Fallback: If no related products found, get latest active products
+        if (relatedPage.isEmpty()) {
+            Specification<Product> fallbackSpec = (root, query, cb) -> {
+                query.orderBy(cb.desc(root.get("createdAt")));
+                return cb.and(
+                    cb.notEqual(root.get("id"), productId),
+                    cb.equal(root.get("isActive"), true),
+                    cb.equal(root.get("inStock"), true)
+                );
+            };
+            relatedPage = productRepository.findAll(fallbackSpec, limit);
+        }
+
         return relatedPage.map(product -> {
             List<ProductImage> images = productImageRepository
                     .findByProductIdOrderByDisplayOrderAsc(product.getId());
