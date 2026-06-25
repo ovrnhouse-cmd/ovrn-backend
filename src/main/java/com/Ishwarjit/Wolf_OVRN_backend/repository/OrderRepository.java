@@ -27,11 +27,11 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
     @org.springframework.data.jpa.repository.Query("SELECT new com.Ishwarjit.Wolf_OVRN_backend.dto.OrderStatusDistributionDto(CAST(o.status AS string), COUNT(o)) FROM Order o GROUP BY o.status")
     List<com.Ishwarjit.Wolf_OVRN_backend.dto.OrderStatusDistributionDto> countOrdersByStatus();
 
-    @org.springframework.data.jpa.repository.Query("SELECT new com.Ishwarjit.Wolf_OVRN_backend.dto.ProductFulfillmentDto(i.product.id, i.productName, i.size, SUM(i.quantity)) " +
-           "FROM Order o JOIN o.items i " +
+    @org.springframework.data.jpa.repository.Query("SELECT new com.Ishwarjit.Wolf_OVRN_backend.dto.ProductFulfillmentDto(i.product.id, i.productName, i.color, i.size, f.name, SUM(i.quantity)) " +
+           "FROM Order o JOIN o.items i LEFT JOIN i.product.fit f " +
            "WHERE o.status IN :statuses " +
            "AND (:filterByProducts = false OR i.product.id IN :productIds) " +
-           "GROUP BY i.product.id, i.productName, i.size " +
+           "GROUP BY i.product.id, i.productName, i.color, i.size, f.name " +
            "ORDER BY SUM(i.quantity) DESC")
     List<com.Ishwarjit.Wolf_OVRN_backend.dto.ProductFulfillmentDto> getFulfillmentAggregation(
            @org.springframework.data.repository.query.Param("statuses") List<com.Ishwarjit.Wolf_OVRN_backend.entity.OrderStatus> statuses,

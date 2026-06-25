@@ -11,6 +11,8 @@ import lombok.Setter;
 public class ProductFulfillmentDto {
     private UUID productId;
     private String productName;
+    private String color;
     private String size;
+    private String fit;
     private Long totalQuantity;
 }
