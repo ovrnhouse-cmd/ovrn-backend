@@ -1,0 +1,8 @@
+ALTER TABLE store_status 
+ADD COLUMN free_shipping_threshold DECIMAL(10,2) NOT NULL DEFAULT 1599.00;
+
+ALTER TABLE store_status 
+ADD COLUMN standard_shipping_fee DECIMAL(10,2) NOT NULL DEFAULT 40.00;
+
+ALTER TABLE orders 
+ADD COLUMN shipping_fee DECIMAL(10,2) NOT NULL DEFAULT 0.00;

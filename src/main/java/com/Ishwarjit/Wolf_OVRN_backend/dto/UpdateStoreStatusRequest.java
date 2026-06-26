@@ -7,4 +7,6 @@ public class UpdateStoreStatusRequest {
     private Boolean isTakingOrders;
     private Boolean isMaintenanceMode;
     private String statusMessage;
+    private java.math.BigDecimal freeShippingThreshold;
+    private java.math.BigDecimal standardShippingFee;
 }

@@ -23,4 +23,12 @@ public class ApiResponse<T> {
     public static <T> ApiResponse<T> created(T data) {
         return new ApiResponse<>(true, 201, "Created", data);
     }
+
+    public static <T> ApiResponse<T> created(T data, String message) {
+        return new ApiResponse<>(true, 201, message, data);
+    }
+
+    public static <T> ApiResponse<T> error(int status, String message) {
+        return new ApiResponse<>(false, status, message, null);
+    }
 }

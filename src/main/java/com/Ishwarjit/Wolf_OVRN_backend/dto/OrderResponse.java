@@ -12,6 +12,9 @@ public record OrderResponse(
         UUID userId,
         String status,
         BigDecimal totalAmount,
+        BigDecimal shippingFee,
+        String discountCode,
+        BigDecimal discountAmount,
         Object shippingAddress,
 
         String trackingNumber,
@@ -29,6 +32,9 @@ public record OrderResponse(
                 order.getUser() != null ? order.getUser().getId() : null,
                 order.getStatus().name(),
                 order.getTotalAmount(),
+                order.getShippingFee(),
+                order.getDiscountCode(),
+                order.getDiscountAmount(),
                 order.getShippingAddress(),
 
                 order.getTrackingNumber(),

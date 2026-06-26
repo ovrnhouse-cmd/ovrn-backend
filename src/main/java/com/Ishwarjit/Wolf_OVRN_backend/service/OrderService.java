@@ -28,14 +28,20 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
+    private final StoreStatusService storeStatusService;
+    private final DiscountService discountService;
 
     public OrderService(
             OrderRepository orderRepository,
             ProductRepository productRepository,
-            UserRepository userRepository) {
+            UserRepository userRepository,
+            StoreStatusService storeStatusService,
+            DiscountService discountService) {
         this.orderRepository = orderRepository;
         this.productRepository = productRepository;
         this.userRepository = userRepository;
+        this.storeStatusService = storeStatusService;
+        this.discountService = discountService;
     }
 
     @Transactional(readOnly = true)
@@ -107,9 +113,34 @@ public class OrderService {
             order.getItems().add(item);
             total = total.add(subtotal);
         }
-        order.setTotalAmount(total);
+
+        com.Ishwarjit.Wolf_OVRN_backend.entity.StoreStatus storeStatus = storeStatusService.getOrCreateStatus();
+        BigDecimal shippingFee = BigDecimal.ZERO;
+        if (total.compareTo(storeStatus.getFreeShippingThreshold()) < 0) {
+            shippingFee = storeStatus.getStandardShippingFee();
+        }
+
+        BigDecimal discountAmount = BigDecimal.ZERO;
+        if (request.getDiscountCode() != null && !request.getDiscountCode().isBlank()) {
+            com.Ishwarjit.Wolf_OVRN_backend.dto.DiscountValidationResponse validation = discountService.validateDiscount(request.getDiscountCode(), user.getId(), total);
+            if (!validation.isValid()) {
+                throw new IllegalArgumentException(validation.getMessage());
+            }
+            discountAmount = validation.getDiscountAmount();
+            order.setDiscountCode(request.getDiscountCode().toUpperCase());
+            order.setDiscountAmount(discountAmount);
+            total = validation.getNewTotal();
+        }
+
+        order.setShippingFee(shippingFee);
+        order.setTotalAmount(total.add(shippingFee));
 
         Order saved = orderRepository.save(order);
+        
+        if (order.getDiscountCode() != null) {
+            discountService.recordDiscountUsage(order.getDiscountCode(), user, saved);
+        }
+        
         return OrderResponse.from(saved);
     }
 

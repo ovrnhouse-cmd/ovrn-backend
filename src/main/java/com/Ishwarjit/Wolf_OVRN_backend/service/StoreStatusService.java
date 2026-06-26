@@ -40,11 +40,17 @@ public class StoreStatusService {
                 status.setStatusMessage(request.getStatusMessage());
             }
         }
+        if (request.getFreeShippingThreshold() != null) {
+            status.setFreeShippingThreshold(request.getFreeShippingThreshold());
+        }
+        if (request.getStandardShippingFee() != null) {
+            status.setStandardShippingFee(request.getStandardShippingFee());
+        }
 
         return StoreStatusResponse.from(storeStatusRepository.save(status));
     }
 
-    private StoreStatus getOrCreateStatus() {
+    public StoreStatus getOrCreateStatus() {
         List<StoreStatus> all = storeStatusRepository.findAll();
         if (!all.isEmpty()) {
             return all.get(0);

@@ -37,6 +37,12 @@ public class StoreStatus {
     @Column(name = "status_message")
     private String statusMessage;
 
+    @Column(name = "free_shipping_threshold", nullable = false, precision = 10, scale = 2)
+    private java.math.BigDecimal freeShippingThreshold = new java.math.BigDecimal("1599.00");
+
+    @Column(name = "standard_shipping_fee", nullable = false, precision = 10, scale = 2)
+    private java.math.BigDecimal standardShippingFee = new java.math.BigDecimal("40.00");
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
